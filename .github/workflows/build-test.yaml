@@ -27,10 +27,14 @@ jobs:
           # Example: Update version in .csproj
           csprojPath="src/AJL/AJL.csproj"
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
-          # Increment version logic here...
-          # Assuming the current version is in the format "major.minor.patch"
-          # You can split it into an array and increment the patch version
-          IFS='.' read -ra versionArray <<< "$currentVersion"
+
+          # Extract the version and version suffix
+          IFS='-' read -ra versionParts <<< "$currentVersion"
+          version=${versionParts[0]}
+          versionSuffix=${versionParts[1]}
+
+          # Increment the version
+          IFS='.' read -ra versionArray <<< "$version"
           major=${versionArray[0]}
           minor=${versionArray[1]}
           patch=${versionArray[2]}
@@ -39,9 +43,11 @@ jobs:
           patch=$((patch + 1))
 
           # Create the new version string
-          newVersion="$major.$minor.$patch"
+          newVersion="$major.$minor.$patch-$versionSuffix"
+
           # Update the version in the .csproj
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
+
           echo "::set-output name=version::$newVersion"
         shell: bash
 
