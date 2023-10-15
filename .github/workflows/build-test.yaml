@@ -59,7 +59,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ./src/AJL/bin/Release/*.nupkg
-          tag_name: $ {{ steps.increment_version.outputs.version }}
+          tag_name: ${{ steps.increment_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
