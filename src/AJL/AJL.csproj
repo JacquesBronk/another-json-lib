@@ -7,6 +7,15 @@
         <Company>Agile Bridge Pty (Ltd)</Company>
         <Product>Another Json Lib</Product>
         <Version>1.0.0</Version>
+        <PackageId>AnotherJsonLibrary</PackageId>
+        <Title>Another Json Library</Title>
+        <Authors>Jacques Bronkhorst</Authors>
+        <Description>Streamline JSON handling in C# with utilities for serialization, comparison, merging, and more. Simplify JSON tasks effortlessly.</Description>
+        <Copyright>Copyright 2023 Agile Bridge</Copyright>
+        <PackageProjectUrl>https://github.com/JacquesBronk/another-json-lib</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/JacquesBronk/another-json-lib</RepositoryUrl>
+        <RepositoryType>Git</RepositoryType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,4 +24,10 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="AnotherJsonLibrary.nuspec">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    
 </Project>
