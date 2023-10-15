@@ -51,6 +51,12 @@ jobs:
         run: dotnet pack --configuration Release --no-build --output ./artifacts
         working-directory: src  # Set the working directory to 'src'
 
+      - name: List Files and Subdirectories
+        run: |
+          # Use the 'find' command to list all files and subdirectories
+          find "${GITHUB_WORKSPACE}" -type f -print
+          find "${GITHUB_WORKSPACE}" -type d -print
+        
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
