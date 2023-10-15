@@ -1,4 +1,4 @@
-name: Build, Pack, and Release
+name: Build-Test-Pack
 
 on:
   push:
@@ -72,14 +72,12 @@ jobs:
       - name: Pack
         run: dotnet pack --configuration release
         working-directory: src  # Set the working directory to 'src'
-        
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
         with:
-          files: ./src/AJL/bin/Release/*.nupkg
-          tag_name: ${{ steps.increment_version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          name: package
+          path: src/AJL/bin/Release/*.nupkg
+
 
 
