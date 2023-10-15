@@ -60,7 +60,7 @@ jobs:
           gist_token: ${{ secrets.GIST_TOKEN }}
           
       - name: Pack
-        run: dotnet pack --configuration release --output ./../.artifacts/
+        run: dotnet pack AJL/AJL.csproj --configuration release --output ./../.artifacts/
         working-directory: src  # Set the working directory to 'src'
 
       - name: Upload Artifact
