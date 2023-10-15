@@ -25,12 +25,11 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
     </ItemGroup>
 
+
     <ItemGroup>
- <ItemGroup>
         <!-- Include your regular source files -->
          <None Update="**\*" Exclude="**\test\**;**\tests\**;tests\AJL.Tests\**" />
-    </ItemGroup>
+   </ItemGroup>
 
-    </ItemGroup>
     
 </Project>
