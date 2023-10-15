@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>AnotherJsonLibrary</id>
+        <version>1.0.0</version>
+        <title>Another Json Library</title>
+        <authors>Jacques Bronkhorst</authors>
+        <owners>Agile Bridge</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Streamline JSON handling in C# with utilities for serialization, comparison, merging, and more. Simplify JSON tasks effortlessly.
+        </description>
+        <releaseNotes>Initial release of Another Json Library.</releaseNotes>
+        <copyright>Copyright 2023 Agile Bridge</copyright>
+        <tags>json json-library json-handling csharp dotnet</tags>
+        <dependencies>
+            <dependency id="Microsoft.Extensions.DependencyInjection" version="7.0.0"/>
+            <dependency id="Microsoft.Extensions.Logging" version="7.0.0"/>
+            <dependency id="Microsoft.Extensions.Logging.Console" version="7.0.0"/>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\src\AnotherJsonLibrary\bin\Release\net6.0\AnotherJsonLibrary.dll" target="lib\net6.0"/>
+        <!-- Add any additional files you want to include in the package -->
+    </files>
+</package>

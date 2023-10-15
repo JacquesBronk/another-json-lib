@@ -28,4 +28,4 @@ jobs:
         
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: src  # Set the working directory to 'src'
+        working-directory: test  # Set the working directory to 'src'
