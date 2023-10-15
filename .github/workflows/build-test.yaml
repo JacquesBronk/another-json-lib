@@ -26,23 +26,35 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
 
+      - name: Test
+        run: dotnet test --configuration Release --no-restore
+        working-directory: test/AJL.Tests  # Set the working directory to 'src'
+
       - name: Auto-increment Version
         id: auto_increment_version
         run: |
           # Get the current version from the csproj file
-          $csprojPath = "src/YourProject.csproj"  # Update with your actual csproj file path
-          $currentVersion = [xml](Get-Content -Path $csprojPath).Project.PropertyGroup.Version
-
+          csprojPath="src/YourProject.csproj"  # Update with your actual csproj file path
+          currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
+    
+          # Split the version into major, minor, and patch components
+          IFS='.' read -ra versionComponents <<< "$currentVersion"
+          major="${versionComponents[0]}"
+          minor="${versionComponents[1]}"
+          patch="${versionComponents[2]}"
+    
           # Increment the patch version by 1
-          $patchVersion = [int]($currentVersion.Split('.')[2])
-          $patchVersion += 1
-
+          ((patch++))
+    
           # Update the csproj file with the new version
-          $newVersion = $currentVersion.Substring(0, $currentVersion.LastIndexOf('.') + 1) + $patchVersion
-          (Get-Content -Path $csprojPath) -replace $currentVersion, $newVersion | Set-Content -Path $csprojPath
-
+          newVersion="$major.$minor.$patch"
+          xmlstarlet ed --inplace -u "/Project/PropertyGroup/Version" -v "$newVersion" $csprojPath
+    
           # Output the new version
           echo "::set-output name=new_version::$newVersion"
+        shell: bash
+        env:
+          DOTNET_ROOT: /home/runner/.dotnet
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build --output ./artifacts
