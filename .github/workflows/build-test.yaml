@@ -23,33 +23,16 @@ jobs:
       - name: Increment Version
         id: increment_version
         run: |
-          # Your version increment logic here
-          # Example: Update version in .csproj
-          csprojPath="src/AJL/AJL.csproj"
-          currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
-
-          # Extract the version and version suffix
-          IFS='-' read -ra versionParts <<< "$currentVersion"
-          version=${versionParts[0]}
-          versionSuffix=${versionParts[1]}
-
-          # Increment the version
-          IFS='.' read -ra versionArray <<< "$version"
-          major=${versionArray[0]}
-          minor=${versionArray[1]}
-          patch=${versionArray[2]}
-
-          # Increment the patch version
-          patch=$((patch + 1))
-
-          # Create the new version string without hyphen
-          newVersion="$major.$minor.$patch-${{github.run_number}}"
+          # Set the version with GitHub run number
+          newVersion="1.0.${{github.run_number}}"
           
           # Update the version in the .csproj
+          csprojPath="src/AJL/AJL.csproj"
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
           
+          # Set the output variable for later steps
           echo "::set-output name=version::$newVersion"
-
+      
         shell: bash
 
       - name: Setup .NET
