@@ -22,7 +22,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore /src/AnotherJsonLib.sln
+        run: dotnet build src/AnotherJsonLib.sln --configuration Release --no-restore  # No need to specify the solution file path here
 
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal src/AJL.Tests
