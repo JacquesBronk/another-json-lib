@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AJL", "AJL\AJL.csproj", "{7EC4C082-7F12-42AB-A008-96DCA3527D6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AJL.Tests", "AJL.Tests\AJL.Tests.csproj", "{CE864B6B-5C9A-4A08-A620-6699AA53BC2F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7EC4C082-7F12-42AB-A008-96DCA3527D6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EC4C082-7F12-42AB-A008-96DCA3527D6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EC4C082-7F12-42AB-A008-96DCA3527D6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EC4C082-7F12-42AB-A008-96DCA3527D6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE864B6B-5C9A-4A08-A620-6699AA53BC2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE864B6B-5C9A-4A08-A620-6699AA53BC2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE864B6B-5C9A-4A08-A620-6699AA53BC2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE864B6B-5C9A-4A08-A620-6699AA53BC2F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
