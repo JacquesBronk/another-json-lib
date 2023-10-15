@@ -7,7 +7,7 @@
     <authors>Jacques Bronkhorst</authors>
     <description>Streamline JSON handling in C# with utilities for serialization, comparison, merging, and more. Simplify JSON tasks effortlessly.</description>
     <copyright>Copyright 2023 Agile Bridge</copyright>
-    <tags></tags>
+    <tags>Json</tags>
     <projectUrl>https://github.com/JacquesBronk/another-json-lib</projectUrl>
     <licenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</licenseUrl>
     <repository type="Git" url="https://github.com/JacquesBronk/another-json-lib" />
