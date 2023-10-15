@@ -70,7 +70,7 @@ jobs:
         working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
 
       - name: Pack
-        run: dotnet pack --configuration release --output ./.artifacts/
+        run: dotnet pack --configuration release --output ./../.artifacts/
         working-directory: src  # Set the working directory to 'src'
 
       - name: Upload Artifact
