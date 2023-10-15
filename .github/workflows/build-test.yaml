@@ -41,11 +41,11 @@ jobs:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore AJL/AJL.csproj
         working-directory: src  # Set the working directory to 'src'
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build AJL/AJL.csproj --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
         
       - name: unit tests for Another Json Lib
