@@ -33,21 +33,5 @@ jobs:
           if_no_artifact_found: fail
           path: ./.artifacts/
 
-      - name: List root
-        run: ls -al $GITHUB_WORKSPACE
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: List artifact
-        run: ls -al ./.artifacts/
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}     
-        
-      - name: Update NuGet package version
-        id: update_nuspec_version
-        run: |
-          sed -i "s/<version>.*<\/version>/<version>${{ steps.get_release_tag.outputs.release_tag }}<\/version>/" AnotherJsonLibrary.nuspec
-        working-directory: ./src/AJL
-
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
