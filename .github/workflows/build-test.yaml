@@ -43,7 +43,7 @@ jobs:
           patch=$((patch + 1))
 
           # Create the new version string without hyphen
-          newVersion="$major.$minor.$patch$versionSuffix"
+          newVersion="$major.$minor.$patch-${{github.run_number}}"
           
           # Update the version in the .csproj
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
