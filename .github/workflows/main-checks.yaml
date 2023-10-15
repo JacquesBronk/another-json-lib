@@ -21,11 +21,17 @@ jobs:
       - name: Set working directory
         run: cd src  # Change to the 'src' directory where your project is located
 
+      - name: List files in current directory
+        run: ls
+
+      - name: Print current directory
+        run: pwd
+
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
-        run: dotnet build AJL/AJL.csproj --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore
         
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
