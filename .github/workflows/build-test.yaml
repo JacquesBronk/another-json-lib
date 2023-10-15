@@ -56,7 +56,7 @@ jobs:
           report_title: Another Json Lib Tests
           github_token: ${{ secrets.GITHUB_TOKEN }}
           gist_name: another_json_lib_tests.md
-          gist_badge_label: 'Another Json Lib: %Counters_passed%/%Counters_total%'
+          gist_badge_label: 'Unit Tests: %Counters_passed%/%Counters_total%'
           gist_token: ${{ secrets.GIST_TOKEN }}
           
       - name: Pack
