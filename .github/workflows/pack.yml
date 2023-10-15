@@ -33,5 +33,11 @@ jobs:
           if_no_artifact_found: fail
           path: ./.artifacts/
 
+      - name: Update NuGet package version
+        id: update_nuspec_version
+        run: |
+          sed -i "s/<version>.*<\/version>/<version>${{ steps.get_release_tag.outputs.release_tag }}<\/version>/" AnotherJsonLibrary.nuspec
+        working-directory: ./.artifacts/
+
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
