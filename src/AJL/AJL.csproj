@@ -26,9 +26,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="AnotherJsonLibrary.nuspec">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+ <ItemGroup>
+        <!-- Include your regular source files -->
+         <None Update="**\*" Exclude="**\test\**;**\tests\**;tests\AJL.Tests\**" />
+    </ItemGroup>
+
     </ItemGroup>
     
 </Project>
