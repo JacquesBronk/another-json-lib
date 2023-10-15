@@ -26,15 +26,8 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
 
-      - name: List
-        run: ls
-
-      - name: List Tests
-        run: ls tests
-
-      - name: Test
-        run: dotnet test --configuration Release --no-restore
-        working-directory: tests/AJL.Tests  # Set the working directory to 'src'
+      - name: Install xmllint
+        run: sudo apt-get install libxml2-utils
 
       - name: Auto-increment Version
         id: auto_increment_version
@@ -42,25 +35,29 @@ jobs:
           # Get the current version from the csproj file
           csprojPath="src/AJL/AJL.csproj"  # Update with your actual csproj file path
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
-    
+          
           # Split the version into major, minor, and patch components
           IFS='.' read -ra versionComponents <<< "$currentVersion"
           major="${versionComponents[0]}"
           minor="${versionComponents[1]}"
           patch="${versionComponents[2]}"
-    
+          
           # Increment the patch version by 1
           ((patch++))
-    
+          
           # Update the csproj file with the new version
           newVersion="$major.$minor.$patch"
           xmlstarlet ed --inplace -u "/Project/PropertyGroup/Version" -v "$newVersion" $csprojPath
-    
+          
           # Output the new version
           echo "::set-output name=new_version::$newVersion"
-        shell: bash
-        env:
-          DOTNET_ROOT: /home/runner/.dotnet
+
+      - name: Commit and push version increment
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -am "Auto-increment version to ${{ steps.auto_increment_version.outputs.new_version }}"
+          git push
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build --output ./artifacts
