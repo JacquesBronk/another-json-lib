@@ -20,15 +20,11 @@ jobs:
       - name: Create Environment File for Output
         run: echo "newVersion=1.0.${{github.run_number}}" >> $GITHUB_ENV
 
-      - name: Update .nuspec Version
+      - name: Update .csproj Version
         run: |
-          # Set the version with GitHub run number
-          newVersion="1.0.${{github.run_number}}"
-          
-          # Update the version in the .nuspec file
-          nuspecPath="src/AJL/AnotherJsonLib.nuspec"
-          sed -i "s|<version>.*<\/version>|<version>$newVersion<\/version>|" $nuspecPath
-        shell: bash
+          # Update the version in the .csproj file
+          sed -i 's/<Version>.*<\/Version>/<Version>${{ env.newVersion }}<\/Version>/' AJL/AJL.csproj
+        working-directory: src
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
