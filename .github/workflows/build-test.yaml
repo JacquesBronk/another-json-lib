@@ -61,7 +61,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: AnotherJsonLibrary.${{ steps.increment_version.outputs.version }}.nupkg
+          name: AnotherJsonLibrary.${{ env.newVersion }}.nupkg
           path: .artifacts/*.nupkg
 
       - name: Create Release
