@@ -26,9 +26,15 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
 
+      - name: List
+        run: ls
+
+      - name: List Tests
+        run: ls tests
+
       - name: Test
         run: dotnet test --configuration Release --no-restore
-        working-directory: test/AJL.Tests  # Set the working directory to 'src'
+        working-directory: tests/AJL.Tests  # Set the working directory to 'src'
 
       - name: Auto-increment Version
         id: auto_increment_version
