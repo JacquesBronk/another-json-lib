@@ -48,7 +48,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
         
-      - name: unit tests for Contoso Business Layer
+      - name: unit tests for Another Json Lib
         uses: zyborg/dotnet-tests-report@v1
         with:
           project_path: tests/AJL.Tests
