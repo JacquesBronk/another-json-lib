@@ -18,7 +18,7 @@ jobs:
         run: echo ::set-output name=release_tag::${{ github.event.release.tag_name }}
 
       - name: List Artifacts
-        run: ls -al $GITHUB_WORKSPACE
+        run: ls -al $GITHUB_WORKSPACE/src/AJL/bin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
