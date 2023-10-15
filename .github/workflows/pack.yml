@@ -13,14 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Get the latest release tag
-        id: get_latest_release
-        run: echo ::set-output name=release_tag::${{ github.event.release.tag_name }}
-
-      - name: Determine package path
-        id: determine_package_path
-        run: echo ::set-output name=package_path::"src/AJL/bin/Release/AnotherJsonLibrary.${{ steps.get_latest_release.outputs.release_tag }}.nupkg"
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: AnotherJsonLibrary.${{ steps.get_latest_release.outputs.release_tag }}.nupkg # Specify the artifact name
+          path: src/AJL/bin/Release
 
       - name: Publish NuGet package
-        run: dotnet nuget push src/AJL/bin/Release/AnotherJsonLibrary.${{ steps.get_latest_release.outputs.release_tag }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push src/AJL/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         working-directory: ./src/AJL/bin/Release
