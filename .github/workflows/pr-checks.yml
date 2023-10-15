@@ -44,4 +44,5 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: test 
+        working-directory: test/AJL.Tests  # Set the working directory to 'test'
+
