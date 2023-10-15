@@ -19,7 +19,7 @@ jobs:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
       - name: Set working directory
-        run: cd /src/  # Change to the 'src' directory where your project is located
+        run: cd src  # Change to the 'src' directory where your project is located
 
       - name: List files in current directory
         run: ls
@@ -31,7 +31,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/AnotherJsonLib.sln --configuration Release --no-restore
         
       - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test src/AJL.Tests/AJL.Tests.csproj --configuration Release --no-build --verbosity normal
