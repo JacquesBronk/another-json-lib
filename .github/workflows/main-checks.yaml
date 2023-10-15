@@ -15,12 +15,9 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.x  # Adjust to your project's .NET version
-
+       
       - name: Set working directory
-        run: cd src 
-        
-      - name: Set working directory
-        run: cd src 
+        run: cd ./src 
         
       - name: List files in current directory
         run: ls
