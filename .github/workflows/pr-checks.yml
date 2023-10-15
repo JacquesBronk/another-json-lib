@@ -22,7 +22,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore /src/AJL/AJL.csproj
+        run: dotnet build src/AnotherJsonLib.sln --configuration Release --no-restore
 
   test:
     runs-on: ubuntu-latest
