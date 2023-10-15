@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Company>Agile Bridge Pty (Ltd)</Company>
         <Product>Another Json Lib</Product>
-        <Version>1.0.$(buildVersion)</Version>
+        <Version>1.0.0</Version>
         <PackageId>AnotherJsonLibrary</PackageId>
         <Title>Another Json Library</Title>
         <Authors>Jacques Bronkhorst</Authors>
