@@ -33,6 +33,16 @@ jobs:
           if_no_artifact_found: fail
           path: ./.artifacts/
 
+      - name: List root
+        run: ls -al $GITHUB_WORKSPACE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: List artifact
+        run: ls -al ./.artifacts/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}     
+        
       - name: Update NuGet package version
         id: update_nuspec_version
         run: |
