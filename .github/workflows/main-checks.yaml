@@ -1,7 +1,9 @@
 name: Main Branch CI
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build-and-test:
@@ -15,21 +17,15 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.x  # Adjust to your project's .NET version
-       
-      - name: Set working directory
-        run: cd ./src 
-        
-      - name: List files in current directory
-        run: ls
-        
-      - name: Print current directory
-        run: pwd
 
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: src  # Set the working directory to 'src'
 
       - name: Build
-        run: dotnet build src/AnotherJsonLib.sln --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore
+        working-directory: src  # Set the working directory to 'src'
         
       - name: Test
-        run: dotnet test src/AJL.Tests/AJL.Tests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal
+        working-directory: src  # Set the working directory to 'src'
