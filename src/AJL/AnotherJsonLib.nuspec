@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>AnotherJsonLibrary</id>
+    <version>1.0.0</version>
+    <title>Another Json Library</title>
+    <authors>Jacques Bronkhorst</authors>
+    <description>Streamline JSON handling in C# with utilities for serialization, comparison, merging, and more. Simplify JSON tasks effortlessly.</description>
+    <copyright>Copyright 2023 Agile Bridge</copyright>
+    <tags></tags>
+    <projectUrl>https://github.com/JacquesBronk/another-json-lib</projectUrl>
+    <licenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</licenseUrl>
+    <repository type="Git" url="https://github.com/JacquesBronk/another-json-lib" />
+  </metadata>
+  <files>
+    <!-- Include all files except those in test directories -->
+    <file src="**\*.*" exclude="**\test\**;**\tests\**" />
+  </files>
+</package>
