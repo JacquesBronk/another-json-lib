@@ -16,51 +16,19 @@ jobs:
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
-      - name: Increment Version and Set Version Suffix
+      - name: Increment Version
         id: increment_version
         run: |
-          csprojPath="src/AJL/AJL.csproj"
+          # Your version increment logic here
+          # Example: Update version in .csproj
+          csprojPath="src/src/AJL/AJL.csproj"
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
-    
-          # Split the version into major, minor, and patch components
-          IFS='.' read -ra versionParts <<< "$currentVersion"
-          major="${versionParts[0]}"
-          minor="${versionParts[1]}"
-          patch="${versionParts[2]}"
-    
-          # Increment the patch version by 1
-          ((patch++))
-    
-          # Set the version suffix
-          versionSuffix="beta${{ github.run_number }}"
-    
-          # Combine major, minor, patch, and version suffix to create the new version
-          newVersion="$major.$minor.$patch-$versionSuffix"
-    
-          # Update the csproj file with the new version
+          # Increment version logic here...
+          newVersion="1.0.1"
+          # Update the version in the .csproj
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
-    
-          # Debugging output
-          echo "New Version: $newVersion"
-          echo "Updated csproj content:"
-          cat $csprojPath
-    
-          # Output the new version
           echo "::set-output name=version::$newVersion"
         shell: bash
-
-
-      - name: Set Version Suffix
-        id: set_version_suffix
-        run: echo "VersionSuffix=beta$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Commit and push version increment
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git commit -am "Auto-increment version to ${{ steps.increment_version.outputs.version }}"
-          git push
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
