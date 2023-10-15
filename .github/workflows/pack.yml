@@ -20,7 +20,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v2
         with:
-          name: AnotherJsonLibrary.${{ steps.get_release_tag.outputs.release_tag }}.nupkg # Use the release tag in the artifact name
+          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg # Use the release tag in the artifact name
           path: src/AJL/bin/Release
 
       - name: Publish NuGet package
