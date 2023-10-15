@@ -19,7 +19,7 @@ jobs:
 
       - name: Determine package path
         id: determine_package_path
-        run: echo ::set-output name=package_path::"src/AJL/bin/Release/YourPackage.${{ steps.get_latest_release.outputs.release_tag }}.nupkg"
+        run: echo ::set-output name=package_path::"src/AJL/bin/Release/AnotherJsonLibrary.${{ steps.get_latest_release.outputs.release_tag }}.nupkg"
 
       - name: Publish NuGet package
         run: dotnet nuget push ${{ steps.determine_package_path.outputs.package_path }} --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
