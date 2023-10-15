@@ -13,23 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 6.x  # Adjust to your project's .NET version
-
-      - name: Restore dependencies
-        run: dotnet restore
-        working-directory: src  # Set the working directory to 'src'
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-        working-directory: src  # Set the working directory to 'src'
-
-      - name: Test
-        run: dotnet test --configuration Release --no-restore
-        working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
-
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
@@ -61,6 +44,23 @@ jobs:
           git config user.email "actions@github.com"
           git commit -am "Auto-increment version to ${{ steps.increment_version.outputs.version }}"
           git push
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.x  # Adjust to your project's .NET version
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: src  # Set the working directory to 'src'
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        working-directory: src  # Set the working directory to 'src'
+
+      - name: Test
+        run: dotnet test --configuration Release --no-restore
+        working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build --output ./artifacts
