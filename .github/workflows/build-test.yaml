@@ -77,13 +77,13 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: AnotherJsonLibrary.${{ steps.increment_version.outputs.version }}.nupkg
-          path: src/AJL/bin/Release/*.nupkg
+          path: .artifacts/*.nupkg
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./src/AJL/bin/Release/*.nupkg
+          files: .artifacts/*.nupkg
           tag_name: ${{ steps.increment_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
