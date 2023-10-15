@@ -51,21 +51,15 @@ jobs:
         working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
 
       - name: Pack
-        run: dotnet pack AJL/AJL.csproj -p:NuspecFile=AJL/AnotherJsonLibrary.nuspec -p:NuspecBasePath=AJL/nuget
+        run: dotnet pack --configuration release
         working-directory: src  # Set the working directory to 'src'
-
-      - name: List Files and Subdirectories
-        run: |
-          # Use the 'find' command to list all files and subdirectories
-          find "${GITHUB_WORKSPACE}" -type f -print
-          find "${GITHUB_WORKSPACE}" -type d -print
         
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           files: ./src/AJL/*.nupkg
-          tag_name: 1.0.1  # Use the desired version directly
+          tag_name: $ {{ steps.increment_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
