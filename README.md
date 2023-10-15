@@ -1,6 +1,6 @@
 # Another Json Library
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE) [![Build & Test](https://github.com/JacquesBronk/another-json-lib/actions/workflows/main-checks.yaml/badge.svg?branch=main&event=status)](https://github.com/JacquesBronk/another-json-lib/actions/workflows/main-checks.yaml)
 
 **Another Json Library** is a collection of utility classes and methods for working with JSON data in C#. It provides a set of tools to streamline JSON handling, including serialization, deserialization, comparison, merging, and more.
 
