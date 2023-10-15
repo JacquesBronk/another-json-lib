@@ -47,11 +47,18 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
-
-      - name: Test
-        run: dotnet test --configuration Release --no-restore
-        working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
-
+        
+      - name: unit tests for Contoso Business Layer
+        uses: zyborg/dotnet-tests-report@v1
+        with:
+          project_path: tests/AJL.Tests
+          report_name: another_json_lib_tests
+          report_title: Another Json Lib Tests
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          gist_name: another_json_lib_tests.md
+          gist_badge_label: 'Another Json Lib: %Counters_passed%/%Counters_total%'
+          gist_token: ${{ secrets.GIST_TOKEN }}
+          
       - name: Pack
         run: dotnet pack --configuration release --output ./../.artifacts/
         working-directory: src  # Set the working directory to 'src'
