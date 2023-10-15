@@ -25,6 +25,8 @@ jobs:
           # Update the version in the .nuspec file
           nuspecPath="src/AJL/AnotherJsonLib.nuspec"
           sed -i "s|<version>.*<\/version>|<version>${{ env.release_tag }}<\/version>|" $nuspecPath
+          mv $nuspecPath ./.artifacts/AnotherJsonLib.nuspec
+          cat ./.artifacts/AnotherJsonLib.nuspec
         shell: bash
 
 
