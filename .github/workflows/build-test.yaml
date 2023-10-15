@@ -16,6 +16,9 @@ jobs:
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
+      - name: Create Environment File for Output
+        run: echo "newVersion=1.0.1" >> $GITHUB_ENV
+
       - name: Increment Version
         id: increment_version
         run: |
@@ -48,7 +51,7 @@ jobs:
         working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build --output ./artifacts
+        run: dotnet pack AJL/AJL.csproj -p:NuspecFile=AJL/AnotherJsonLibrary.nuspec -p:NuspecBasePath=AJL/nuget
         working-directory: src  # Set the working directory to 'src'
 
       - name: List Files and Subdirectories
@@ -61,7 +64,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./src/artifacts/*.nupkg
+          files: ./src/AJL/*.nupkg
           tag_name: ${{ steps.increment_version.outputs.version }}  # Use the new version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
