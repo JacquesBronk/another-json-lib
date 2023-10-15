@@ -21,7 +21,7 @@ jobs:
         run: |
           # Your version increment logic here
           # Example: Update version in .csproj
-          csprojPath="src/src/AJL/AJL.csproj"
+          csprojPath="src/AJL/AJL.csproj"
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
           # Increment version logic here...
           newVersion="1.0.1"
