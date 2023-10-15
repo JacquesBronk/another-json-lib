@@ -42,13 +42,14 @@ jobs:
           # Increment the patch version
           patch=$((patch + 1))
 
-          # Create the new version string
-          newVersion="$major.$minor.$patch-$versionSuffix"
-
+          # Create the new version string without hyphen
+          newVersion="$major.$minor.$patch$versionSuffix"
+          
           # Update the version in the .csproj
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
-
+          
           echo "::set-output name=version::$newVersion"
+
         shell: bash
 
       - name: Setup .NET
