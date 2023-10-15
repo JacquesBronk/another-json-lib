@@ -17,11 +17,6 @@ jobs:
         id: get_release_tag
         run: echo ::set-output name=release_tag::${{ github.event.release.tag_name }}
 
-      - name: List Artifacts
-        run: ls -al $GITHUB_WORKSPACE
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-    
       - name: Download artifact
         uses: aochmann/actions-download-artifact@1.0.4
         with:
@@ -36,6 +31,7 @@ jobs:
           check_artifacts: true
           search_artifacts: true
           if_no_artifact_found: fail
+          path: ./.artifacts/
 
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
