@@ -47,7 +47,7 @@ jobs:
         id: update_nuspec_version
         run: |
           sed -i "s/<version>.*<\/version>/<version>${{ steps.get_release_tag.outputs.release_tag }}<\/version>/" AnotherJsonLibrary.nuspec
-        working-directory: ./.artifacts/
+        working-directory: ./src/AJL
 
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
