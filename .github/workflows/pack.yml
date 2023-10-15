@@ -17,11 +17,32 @@ jobs:
         id: get_release_tag
         run: echo ::set-output name=release_tag::${{ github.event.release.tag_name }}
 
-      - name: Download Artifact
-        uses: actions/download-artifact@v2
+      - name: Safe download workflow artifact
+        uses: Legit-Labs/action-download-artifact@v2.18.0
         with:
-          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg # Use the release tag in the artifact name
+        # GitHub token
+          github_token: ${{ secrets.RELEASE_TOKEN }} # Use the default GitHub token
+
+          # Workflow name
+          workflow: NameOfYourWorkflow # Replace with the name of your workflow
+      
+          # Wanted status or conclusion to search for in recent runs
+          workflow_conclusion: success # Replace with the desired status or conclusion
+      
+          # Repository name with owner (like actions/checkout)
+          repo: ${{ github.repository }} # Use the default repository
+      
+          # Artifact name (download all artifacts if not specified)
+          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg # Specify the name of the artifact you want to download
+      
+          # Where to unpack the artifact (optional, default is ./artifacts)
           path: src/AJL/bin/Release
+      
+          # Check workflow run whether it has an artifact (optional)
+          check_artifacts: true
+      
+          # Search workflow runs for artifact with specified name (optional)
+          search_artifacts: true
 
       - name: Publish NuGet package
         run: dotnet nuget push src/AJL/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
