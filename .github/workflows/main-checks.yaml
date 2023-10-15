@@ -23,8 +23,8 @@ jobs:
 
       - name: Build
         run: dotnet build --configuration Release --no-restore  # No need to specify the solution file path here
-        working-directory: src/
+        working-directory: src
         
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: src/
+        working-directory: src
