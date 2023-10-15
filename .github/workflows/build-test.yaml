@@ -1,4 +1,4 @@
-name: Build & Test
+name: Build, Pack, and Release
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,34 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
-        
-      - name: Test
-        run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: test/AJL.Tests  # Set the working directory to 'test'
+
+      - name: Auto-increment Version
+        id: auto_increment_version
+        run: |
+          # Get the current version from the csproj file
+          $csprojPath = "src/YourProject.csproj"  # Update with your actual csproj file path
+          $currentVersion = [xml](Get-Content -Path $csprojPath).Project.PropertyGroup.Version
+
+          # Increment the patch version by 1
+          $patchVersion = [int]($currentVersion.Split('.')[2])
+          $patchVersion += 1
+
+          # Update the csproj file with the new version
+          $newVersion = $currentVersion.Substring(0, $currentVersion.LastIndexOf('.') + 1) + $patchVersion
+          (Get-Content -Path $csprojPath) -replace $currentVersion, $newVersion | Set-Content -Path $csprojPath
+
+          # Output the new version
+          echo "::set-output name=new_version::$newVersion"
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output ./artifacts
+        working-directory: src  # Set the working directory to 'src'
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./src/artifacts/*.nupkg
+          tag_name: ${{ steps.auto_increment_version.outputs.new_version }}  # Use the new version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
