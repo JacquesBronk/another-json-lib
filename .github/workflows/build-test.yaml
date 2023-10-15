@@ -40,7 +40,7 @@ jobs:
         id: auto_increment_version
         run: |
           # Get the current version from the csproj file
-          csprojPath="src/YourProject.csproj"  # Update with your actual csproj file path
+          csprojPath="src/AJL/AJL.csproj"  # Update with your actual csproj file path
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
     
           # Split the version into major, minor, and patch components
