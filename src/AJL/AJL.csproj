@@ -5,6 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>1.0.0</Version>
+        <Authors>Jacques Bronkhorst</Authors>
+        <Description>Streamline JSON handling in C# with utilities for serialization, comparison, merging, and more. Simplify JSON tasks effortlessly.</Description>
+        <Copyright>Copyright 2023 Agile Bridge</Copyright>
+        <PackageTags></PackageTags>
+        <PackageProjectUrl>https://github.com/JacquesBronk/another-json-lib</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</PackageLicenseUrl>
     </PropertyGroup>
 
     <ItemGroup>
