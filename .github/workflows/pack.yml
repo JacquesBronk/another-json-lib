@@ -25,12 +25,17 @@ jobs:
       - name: Download artifact
         uses: aochmann/actions-download-artifact@1.0.4
         with:
+          workflow: build-test.yml
+          workflow_conclusion: success
           # GitHub token
           github_token: ${{ secrets.RELEASE_TOKEN }}
           # Repository name with owner
           latest: true
-          # Artifact unpack location
-          path: ./.artifacts/
+          name_is_regexp: false
+          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
+          check_artifacts: true
+          search_artifacts: true
+          if_no_artifact_found: fail
 
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
