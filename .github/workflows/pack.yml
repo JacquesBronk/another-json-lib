@@ -18,7 +18,7 @@ jobs:
         run: echo ::set-output name=release_tag::${{ github.event.release.tag_name }}
 
       - name: List Artifacts
-        run: ls -al $GITHUB_WORKSPACE/src/AJL/bin
+        run: ls -al $GITHUB_WORKSPACE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,7 +41,7 @@ jobs:
           name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg # Specify the name of the artifact you want to download
       
           # Where to unpack the artifact (optional, default is ./artifacts)
-          path: src/AJL/bin/Release
+          path: ./.artifacts
       
           # Check workflow run whether it has an artifact (optional)
           check_artifacts: true
@@ -50,5 +50,4 @@ jobs:
           search_artifacts: true
 
       - name: Publish NuGet package
-        run: dotnet nuget push src/AJL/bin/Release/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        working-directory: ./src/AJL/bin/Release
+        run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
