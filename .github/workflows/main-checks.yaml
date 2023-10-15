@@ -17,11 +17,14 @@ jobs:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
       - name: Set working directory
-        run: cd src  # Change to the 'src' directory where your project is located
-
+        run: cd src 
+        
+      - name: Set working directory
+        run: cd src 
+        
       - name: List files in current directory
-        run: ls src/
-
+        run: ls
+        
       - name: Print current directory
         run: pwd
 
