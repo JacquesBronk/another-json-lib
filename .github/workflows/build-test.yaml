@@ -28,54 +28,38 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-restore
-        working-directory: tests/AJL.Tests  # Set the working directory to 'src'
+        working-directory: tests/AJL.Tests  # Set the working directory to 'tests/AJL.Tests'
 
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
-      - name: List files in working directory
-        run: ls src/AJL
-
-      - name: Auto-increment Version
-        id: auto_increment_version
+      - name: Increment Version
+        id: increment_version
         run: |
-          # Get the current version from the csproj file
-          csprojPath="src/AJL/AJL.csproj"  # Update with your actual csproj file path
+          csprojPath="src/AJL/AJL.csproj"
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
-          
-          # Debugging output
-          echo "Current Version: $currentVersion"
-          
-          # Split the version into major, minor, and patch components
-          IFS='.' read -ra versionComponents <<< "$currentVersion"
-          major="${versionComponents[0]}"
-          minor="${versionComponents[1]}"
-          patch="${versionComponents[2]}"
-          
-          # Debugging output
-          echo "Major: $major, Minor: $minor, Patch: $patch"
-          
-          # Increment the patch version by 1
+          IFS='-' read -ra versionComponents <<< "$currentVersion"
+          versionWithoutSuffix="${versionComponents[0]}"
+          IFS='.' read -ra versionParts <<< "$versionWithoutSuffix"
+          major="${versionParts[0]}"
+          minor="${versionParts[1]}"
+          patch="${versionParts[2]}"
           ((patch++))
-          
-          # Debugging output
-          echo "New Patch Version: $patch"
-          
-          # Update the csproj file with the new version
-          newVersion="$major.$minor.$patch"
-          xmlstarlet ed --inplace -u "/Project/PropertyGroup/Version" -v "$newVersion" $csprojPath
-          
-          # Debugging output
-          echo "New Version: $newVersion"
-          
-          # Output the new version
-          echo "::set-output name=new_version::$newVersion"
+          newVersion="$major.$minor.$patch-$(VersionSuffix)"
+          sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
+          echo "::set-output name=version::$newVersion"
+        shell: bash
+
+      - name: Set Version Suffix
+        id: set_version_suffix
+        run: echo "VersionSuffix=beta$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        shell: bash
 
       - name: Commit and push version increment
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git commit -am "Auto-increment version to ${{ steps.auto_increment_version.outputs.new_version }}"
+          git commit -am "Auto-increment version to ${{ steps.increment_version.outputs.version }}"
           git push
 
       - name: Pack
@@ -87,6 +71,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ./src/artifacts/*.nupkg
-          tag_name: ${{ steps.auto_increment_version.outputs.new_version }}  # Use the new version
+          tag_name: ${{ steps.increment_version.outputs.version }}  # Use the new version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
