@@ -18,13 +18,14 @@ jobs:
         with:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
+      - name: Set working directory
+        run: cd src  # Change to the 'src' directory where your project is located
+
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore  # No need to specify the solution file path here
-        working-directory: src
+        run: dotnet build --configuration Release --no-restore
         
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: src
