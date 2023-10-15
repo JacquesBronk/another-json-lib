@@ -20,34 +20,17 @@ jobs:
       - name: List Artifacts
         run: ls -al $GITHUB_WORKSPACE
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Safe download workflow artifact
-        uses: Legit-Labs/action-download-artifact@v2.18.0
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+    
+      - name: Download artifact
+        uses: aochmann/actions-download-artifact@1.0.4
         with:
-        # GitHub token
-          github_token: ${{ secrets.RELEASE_TOKEN }} # Use the default GitHub token
-
-          # Workflow name
-          workflow: NameOfYourWorkflow # Replace with the name of your workflow
-      
-          # Wanted status or conclusion to search for in recent runs
-          workflow_conclusion: success # Replace with the desired status or conclusion
-      
-          # Repository name with owner (like actions/checkout)
-          repo: ${{ github.repository }} # Use the default repository
-      
-          # Artifact name (download all artifacts if not specified)
-          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg # Specify the name of the artifact you want to download
-      
-          # Where to unpack the artifact (optional, default is ./artifacts)
-          path: ./.artifacts
-      
-          # Check workflow run whether it has an artifact (optional)
-          check_artifacts: true
-      
-          # Search workflow runs for artifact with specified name (optional)
-          search_artifacts: true
+          # GitHub token
+          github_token: ${{ secrets.RELEASE_TOKEN }}
+          # Repository name with owner
+          latest: true
+          # Artifact unpack location
+          path: ./.artifacts/
 
       - name: Publish NuGet package
         run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
