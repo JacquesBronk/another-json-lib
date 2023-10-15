@@ -1,6 +1,7 @@
 # Another Json Library
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE) [![Build & Test](https://github.com/JacquesBronk/another-json-lib/actions/workflows/build-test.yaml/badge.svg)](https://github.com/JacquesBronk/another-json-lib/actions/workflows/build-test.yaml)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE) [![Build & Test](https://github.com/JacquesBronk/another-json-lib/actions/workflows/build-test.yaml/badge.svg)](https://github.com/JacquesBronk/another-json-lib/actions/workflows/build-test.yaml)![Nuget](https://img.shields.io/nuget/v/AnotherJsonLibrary)
+
 
 ## Overview
 
