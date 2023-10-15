@@ -16,7 +16,7 @@
         <PackageLicenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/JacquesBronk/another-json-lib</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
-        <IsPackable>false</IsPackable>
+        <IsPackable>true</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
