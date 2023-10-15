@@ -26,6 +26,10 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         working-directory: src  # Set the working directory to 'src'
 
+      - name: Test
+        run: dotnet test --configuration Release --no-restore
+        working-directory: tests/AJL.Tests  # Set the working directory to 'src'
+
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
@@ -36,18 +40,30 @@ jobs:
           csprojPath="src/AJL/AJL.csproj"  # Update with your actual csproj file path
           currentVersion=$(xmllint --xpath 'string(/Project/PropertyGroup/Version)' $csprojPath)
           
+          # Debugging output
+          echo "Current Version: $currentVersion"
+          
           # Split the version into major, minor, and patch components
           IFS='.' read -ra versionComponents <<< "$currentVersion"
           major="${versionComponents[0]}"
           minor="${versionComponents[1]}"
           patch="${versionComponents[2]}"
           
+          # Debugging output
+          echo "Major: $major, Minor: $minor, Patch: $patch"
+          
           # Increment the patch version by 1
           ((patch++))
+          
+          # Debugging output
+          echo "New Patch Version: $patch"
           
           # Update the csproj file with the new version
           newVersion="$major.$minor.$patch"
           xmlstarlet ed --inplace -u "/Project/PropertyGroup/Version" -v "$newVersion" $csprojPath
+          
+          # Debugging output
+          echo "New Version: $newVersion"
           
           # Output the new version
           echo "::set-output name=new_version::$newVersion"
