@@ -16,7 +16,7 @@ jobs:
       - name: Install xmllint
         run: sudo apt-get install libxml2-utils
 
-      - name: Increment Version
+      - name: Increment Patch Version
         id: increment_version
         run: |
           csprojPath="src/AJL/AJL.csproj"
@@ -30,8 +30,14 @@ jobs:
           ((patch++))
           newVersion="$major.$minor.$patch-$(VersionSuffix)"
           sed -i "s/<Version>.*<\/Version>/<Version>$newVersion<\/Version>/" $csprojPath
+
+          # Debugging output
+          echo "New Version: $newVersion"
+          echo "Updated csproj content:"
+          cat $csprojPath
+
           echo "::set-output name=version::$newVersion"
-        shell: bash
+          shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
 
       - name: Set Version Suffix
         id: set_version_suffix
