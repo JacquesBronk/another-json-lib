@@ -28,8 +28,8 @@
 
     <ItemGroup>
         <!-- Include your regular source files -->
-         <None Update="**\*" Exclude="**\test\**;**\tests\**;tests\AJL.Tests\**" />
-   </ItemGroup>
+        <None Update="**\*" Exclude="**\test\**;**\tests\**" />
+    </ItemGroup>
 
     
 </Project>
