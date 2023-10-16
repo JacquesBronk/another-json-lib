@@ -25,7 +25,13 @@ jobs:
           # Update the version in the .csproj file
           sed -i 's/<Version>.*<\/Version>/<Version>${{ env.newVersion }}<\/Version>/' AJL/AJL.csproj
         working-directory: src
-
+        
+      - name: Update .nuspec Version
+        run: |
+          # Update the version in the .csproj file
+          sed -i 's/<version>.*<\/version>/<version>${{ env.newVersion }}<\/version>/' AJL/AnotherJsonLib.nuspec
+        working-directory: src
+        
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
@@ -50,17 +56,14 @@ jobs:
           gist_badge_label: 'Unit Tests: %Counters_passed%/%Counters_total%'
           gist_token: ${{ secrets.GIST_TOKEN }}
 
-          
-      - name: Publish NuGet
-        uses: brandedoutcast/publish-nuget@v2.5.5
-        with:
-           PROJECT_FILE_PATH: src/AJL/AJL.csproj
-           PACKAGE_NAME: AnotherJsonLib
-           VERSION_FILE_PATH: src/AJL/AnotherJsonLib.nuspec
-           NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
-           VERSION_REGEX: ^\s*<version>(.*)<\/version>\s*$
-  
-
+      - name: Pack & Publish nuget   
+        run: |
+          dotnet pack AJL/AJL.csproj --no-dependencies --configuration Release /p:NuspecFile=AnotherJsonLib.nuspec --output ../.artifacts/
+          cd ../.artifacts/ | pwd
+          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        shell: bash
+        working-directory: src
+        
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
