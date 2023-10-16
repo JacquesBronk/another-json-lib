@@ -56,12 +56,12 @@ jobs:
           gist_badge_label: 'Unit Tests: %Counters_passed%/%Counters_total%'
           gist_token: ${{ secrets.GIST_TOKEN }}
 
-      - name: Pack & Publish nuget   
-        run: |
-          dotnet pack AJL/AJL.csproj /p:NuspecFile=AnotherJsonLib.nuspec --no-dependencies --configuration Release --output ../.artifacts/
-          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
-        shell: bash
-        working-directory: src
+#      - name: Pack & Publish nuget   
+#        run: |
+#          dotnet pack AJL/AJL.csproj /p:NuspecFile=AnotherJsonLib.nuspec --no-dependencies --configuration Release --output ../.artifacts/
+#          dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+#        shell: bash
+#        working-directory: src
         
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
