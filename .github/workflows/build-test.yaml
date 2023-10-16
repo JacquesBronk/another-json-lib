@@ -55,8 +55,8 @@ jobs:
         uses: brandedoutcast/publish-nuget@v2.5.5
         with:
            PROJECT_FILE_PATH: src/AJL/AJL.csproj
-           PACKAGE_NAME: AnotherJsonLibrary
-           VERSION_FILE_PATH: src/AJL/AnotherJsonLibrary.nuspec
+           PACKAGE_NAME: AnotherJsonLib
+           VERSION_FILE_PATH: src/AJL/AnotherJsonLib.nuspec
            NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
   
 
