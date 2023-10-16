@@ -58,7 +58,9 @@ jobs:
 
       - name: Pack & Publish nuget   
         run: |
-          dotnet pack AJL/AJL.csproj --no-dependencies --configuration Release /p:NuspecFile=AnotherJsonLib.nuspec --output ../.artifacts/
+          dotnet publish AJL/AJL.csproj --no-dependencies --configuration Release --output ../app/
+          cd ../app | pwd | ls
+          dotnet pack /p:NuspecFile=AnotherJsonLib.nuspec --output ../.artifacts/
           cd ../.artifacts/ | pwd
           dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
         shell: bash
