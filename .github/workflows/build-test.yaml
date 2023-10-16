@@ -58,6 +58,7 @@ jobs:
            PACKAGE_NAME: AnotherJsonLib
            VERSION_FILE_PATH: src/AJL/AnotherJsonLib.nuspec
            NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+           VERSION_REGEX: ^\s*<version>(.*)<\/version>\s*$
   
 
       - name: Upload Artifact
