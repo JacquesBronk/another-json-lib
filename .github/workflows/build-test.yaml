@@ -42,7 +42,7 @@ jobs:
         working-directory: src  # Set the working directory to 'src'
 
       - name: Build
-        run: dotnet build AJL/AJL.csproj --configuration Release --no-restore
+        run: dotnet build AJL/AJL.csproj --configuration Release --no-dependencies
         working-directory: src  # Set the working directory to 'src'
         
       - name: unit tests for Another Json Lib
