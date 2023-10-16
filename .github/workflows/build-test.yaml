@@ -49,10 +49,16 @@ jobs:
           gist_name: another_json_lib_tests.md
           gist_badge_label: 'Unit Tests: %Counters_passed%/%Counters_total%'
           gist_token: ${{ secrets.GIST_TOKEN }}
+
           
-      - name: Pack
-        run: dotnet pack AJL/AJL.csproj --configuration release --output ./../.artifacts/
-        working-directory: src  # Set the working directory to 'src'
+      - name: Publish NuGet
+        uses: brandedoutcast/publish-nuget@v2.5.5
+        with:
+           PROJECT_FILE_PATH: src/AJL/AJL.csproj
+           PACKAGE_NAME: AnotherJsonLibrary
+           VERSION_FILE_PATH: src/AJL/AnotherJsonLibrary.nuspec
+           NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+  
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
