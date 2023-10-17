@@ -26,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\AJL\AJL.csproj" />
+      <ProjectReference Include="..\..\src\AnotherJsonLib\AnotherJsonLib.csproj" />
     </ItemGroup>
 
 </Project>

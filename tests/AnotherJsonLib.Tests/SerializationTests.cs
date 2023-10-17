@@ -1,14 +1,14 @@
 using System.Diagnostics;
-using AJL.Infra;
-using AJL.Tests.Helpers;
-using AJL.Tests.ValueObjects;
+using AnotherJsonLib.Infra;
+using AnotherJsonLib.Tests.Helpers;
+using AnotherJsonLib.Tests.ValueObjects;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit.Abstractions;
-using LoggerFactory = AJL.Infra.LoggerFactory;
+using LoggerFactory = AnotherJsonLib.Infra.LoggerFactory;
 
-namespace AJL.Tests;
+namespace AnotherJsonLib.Tests;
 
 public class SerializationTests
 {
@@ -174,21 +174,24 @@ public class SerializationTests
         [Fact]
         public void ToJson_SerializeWithPerformance_TestPerformance()
         {
+            var simpleObject = JsonTestDummies.CreateSimpleObject();
             // Measure the time it takes to serialize a large number of objects
             var stopwatch = Stopwatch.StartNew();
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 10000; i++)
             {
-                var simpleObject = JsonTestDummies.CreateSimpleObject();
                 simpleObject.ToJson();
             }
             stopwatch.Stop();
 
             // Act & Assert
             var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
-            _testOutputHelper.WriteLine($"Serialization performance: {elapsedMilliseconds} ms for 1000 objects");
+            _testOutputHelper.WriteLine($"Serialization performance: {elapsedMilliseconds} ms for 10000 objects");
 
             // You can set a performance threshold and assert that the serialization time is within that threshold
             // For example:
-            // elapsedMilliseconds.Should().BeLessOrEqualTo(100); // Check if it's less than or equal to 100 ms
+            elapsedMilliseconds.Should().BeLessOrEqualTo(120); // Check if it's less than or equal to 120 ms
         }
-    }
+
+}
+
+

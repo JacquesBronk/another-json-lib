@@ -1,4 +1,4 @@
-﻿namespace AJL.Tests.ValueObjects;
+﻿namespace AnotherJsonLib.Tests.ValueObjects;
 
 public interface IObjectWithException
 {

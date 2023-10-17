@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AJL", "AJL\AJL.csproj", "{7EC4C082-7F12-42AB-A008-96DCA3527D6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnotherJsonLib", "AnotherJsonLib\AnotherJsonLib.csproj", "{7EC4C082-7F12-42AB-A008-96DCA3527D6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AJL.Tests", "..\tests\AJL.Tests\AJL.Tests.csproj", "{0C3073C8-1699-436C-AE7D-9F6B468CEBB2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnotherJsonLib.Tests", "..\tests\AnotherJsonLib.Tests\AnotherJsonLib.Tests.csproj", "{0C3073C8-1699-436C-AE7D-9F6B468CEBB2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

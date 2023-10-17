@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace AJL.Utility;
+namespace AnotherJsonLib.Utility;
 
 public class JsonElementComparer : IEqualityComparer<JsonElement>
 {
