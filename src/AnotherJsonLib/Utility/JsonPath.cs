@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace AJL.Utility;
+namespace AnotherJsonLib.Utility;
 
 /// <summary>
 /// Provides utility methods for querying JSON data using JSONPath expressions.
@@ -10,10 +10,10 @@ public static partial class JsonTools
     /// <summary>
     /// Queries JSON data using a JSONPath expression and returns a collection of matching JSON elements.
     /// </summary>
-    /// <param name="json">The JSON data as a string.</param>
+    /// <param name="jsonDocument"></param>
     /// <param name="jsonPath">The JSONPath expression.</param>
     /// <returns>A collection of matching JSON elements.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> or <paramref name="jsonPath"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="jsonDocument"/> or <paramref name="jsonPath"/> is null or empty.</exception>
     public static IEnumerable<JsonElement?> QueryJsonElement(this JsonDocument jsonDocument, string jsonPath)
     {
         if (jsonDocument == null || string.IsNullOrEmpty(jsonPath))

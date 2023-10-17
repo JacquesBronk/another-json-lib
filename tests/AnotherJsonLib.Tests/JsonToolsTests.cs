@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Text.Json;
 using FluentAssertions;
-using AJL.Utility;
+using AnotherJsonLib.Utility;
 
-namespace AJL.Tests;
+namespace AnotherJsonLib.Tests;
 
 public class JsonToolsTests
 {

@@ -1,10 +1,10 @@
 using System.Text.Json;
-using AJL.Tests.ValueObjects;
+using AnotherJsonLib.Tests.ValueObjects;
 using Bogus;
 using Microsoft.Extensions.Logging;
-using LoggerFactory = AJL.Infra.LoggerFactory;
+using LoggerFactory = AnotherJsonLib.Infra.LoggerFactory;
 
-namespace AJL.Tests.Helpers;
+namespace AnotherJsonLib.Tests.Helpers;
 
 public static class JsonTestDummies
 {

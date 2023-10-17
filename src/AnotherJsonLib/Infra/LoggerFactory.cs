@@ -1,4 +1,4 @@
-namespace AJL.Infra;
+namespace AnotherJsonLib.Infra;
 
 using Microsoft.Extensions.Logging;
 

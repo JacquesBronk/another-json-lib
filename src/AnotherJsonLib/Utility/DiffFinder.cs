@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
-using AJL.Infra;
+using AnotherJsonLib.Infra;
 
 
-namespace AJL.Utility;
+namespace AnotherJsonLib.Utility;
 
     public static partial class JsonTools
     {

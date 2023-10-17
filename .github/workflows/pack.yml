@@ -20,14 +20,6 @@ jobs:
       - name: Create Environment File for Output
         run: echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
         
-      - name: Update .nuspec Version
-        run: |
-          # Update the version in the .nuspec file
-          nuspecPath="src/AJL/AnotherJsonLib.nuspec"
-          sed -i "s|<version>[^<]*<\/version>|<version>${{ env.release_tag }}<\/version>|" $nuspecPath
-        shell: bash
-
-
       - name: Download artifact
         uses: aochmann/actions-download-artifact@1.0.4
         with:

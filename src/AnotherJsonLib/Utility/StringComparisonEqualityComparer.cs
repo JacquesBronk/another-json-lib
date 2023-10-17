@@ -1,4 +1,4 @@
-namespace AJL.Utility;
+namespace AnotherJsonLib.Utility;
 
 public class StringComparisonEqualityComparer : IEqualityComparer<byte>
 {

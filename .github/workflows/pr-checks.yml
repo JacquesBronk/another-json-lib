@@ -39,10 +39,11 @@ jobs:
         with:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Build
+        run: dotnet build AnotherJsonLib/AnotherJsonLib.csproj --configuration Release
+        working-directory: src  # Set the working directory to 'src'
 
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-        working-directory: test/AJL.Tests  # Set the working directory to 'test'
+        working-directory: test/AnotherJsonLib.Tests  # Set the working directory to 'test'
 

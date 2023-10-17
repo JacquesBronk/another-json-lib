@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace AJL.Tests.ValueObjects;
+namespace AnotherJsonLib.Tests.ValueObjects;
 
 public class LargeObject
 {

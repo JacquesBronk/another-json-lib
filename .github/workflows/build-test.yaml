@@ -23,13 +23,7 @@ jobs:
       - name: Update .csproj Version
         run: |
           # Update the version in the .csproj file
-          sed -i 's/<Version>.*<\/Version>/<Version>${{ env.newVersion }}<\/Version>/' AJL/AJL.csproj
-        working-directory: src
-        
-      - name: Update .nuspec Version
-        run: |
-          # Update the version in the .csproj file
-          sed -i 's/<version>.*<\/version>/<version>${{ env.newVersion }}<\/version>/' AJL/AnotherJsonLib.nuspec
+          sed -i 's/<Version>.*<\/Version>/<Version>${{ env.newVersion }}<\/Version>/' AnotherJsonLib/AnotherJsonLib.csproj
         working-directory: src
         
       - name: Setup .NET
@@ -38,17 +32,17 @@ jobs:
           dotnet-version: 6.x  # Adjust to your project's .NET version
 
       - name: Restore dependencies
-        run: dotnet restore AJL/AJL.csproj
+        run: dotnet restore AnotherJsonLib/AnotherJsonLib.csproj
         working-directory: src  # Set the working directory to 'src'
 
       - name: Build
-        run: dotnet build AJL/AJL.csproj --configuration Release --no-dependencies
+        run: dotnet build AnotherJsonLib/AnotherJsonLib.csproj --configuration Release --no-dependencies
         working-directory: src  # Set the working directory to 'src'
         
       - name: unit tests for Another Json Lib
         uses: zyborg/dotnet-tests-report@v1
         with:
-          project_path: tests/AJL.Tests
+          project_path: tests/AnotherJsonLib.Tests
           report_name: another_json_lib_tests
           report_title: Another Json Lib Tests
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +51,7 @@ jobs:
           gist_token: ${{ secrets.GIST_TOKEN }}
           
       - name: Pack
-        run: dotnet pack AJL/AJL.csproj --configuration release --output ./../.artifacts/
+        run: dotnet pack AnotherJsonLib/AnotherJsonLib.csproj --configuration release --output ./../.artifacts/
         working-directory: src  # Set the working directory to 'src'
        
       - name: Upload Artifact

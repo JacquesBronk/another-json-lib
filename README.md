@@ -170,3 +170,67 @@ In this real-world example, the EvaluatePointer method is used to navigate the J
 - For data patching or advanced search operations within complex JSON structures.
 
 By using `EvaluatePointer`, you can efficiently navigate and extract data from a JSON document based on a JSON Pointer, making it useful in scenarios where you need to work with specific elements within a large JSON structure without fully deserializing it.
+
+### JSON Path Query
+
+- **Use Case:** Query JSON data using JSON Path expressions to retrieve specific elements.
+- **Examples:**
+
+```csharp
+  string json = "{\"user\": {\"id\": 123, \"name\": \"John\"}, \"items\": [\"item1\", \"item2\", \"item3\"]}";
+  var jsonDocument = JsonDocument.Parse(json);
+
+  // Example 1: Query a single property (user name)
+  string jsonPath1 = "$.user.name";
+  var result1 = jsonDocument.QueryJsonElement(jsonPath1).FirstOrDefault();
+  Console.WriteLine($"Example 1: {jsonPath1} = {result1}");
+
+  // Example 2: Query all items in the 'items' array
+  string jsonPath2 = "$.items[*]";
+  var results2 = jsonDocument.QueryJsonElement(jsonPath2);
+  Console.WriteLine("Example 2: Query all items in the 'items' array:");
+  foreach (var result in results2)
+  {
+      if (result != null)
+      {
+          Console.WriteLine($"- {result}");
+      }
+  }
+
+  // Example 3: Query all descendants of the 'user' object
+  string jsonPath3 = "$.user.##";
+  var results3 = jsonDocument.QueryJsonElement(jsonPath3);
+  Console.WriteLine("Example 3: Query all descendants of the 'user' object:");
+  foreach (var result in results3)
+  {
+      if (result != null)
+      {
+          Console.WriteLine($"- {result}");
+      }
+  }
+
+  // Example 4: Query elements at specific array indexes
+  string jsonPath4 = "$.items[1]"; // Retrieve the second item (index 1)
+  var result4 = jsonDocument.QueryJsonElement(jsonPath4).FirstOrDefault();
+  Console.WriteLine($"Example 4: {jsonPath4} = {result4}");
+
+  // Example 5: Query multiple elements at specific array indexes
+  string jsonPath5 = "$.items[0,2]"; // Retrieve the first and third items (indexes 0 and 2)
+  var results5 = jsonDocument.QueryJsonElement(jsonPath5);
+  Console.WriteLine("Example 5: Query multiple elements at specific array indexes:");
+  foreach (var result in results5)
+  {
+      if (result != null)
+      {
+          Console.WriteLine($"- {result}");
+      }
+  }
+```
+
+In these examples, various JSON Path expressions are used to query JSON data. You can see how the QueryJsonElement method retrieves specific elements based on the provided JSON Path expressions.
+
+When to Use JSON Path Query
+When you need to extract specific data elements from a JSON document using JSON Path expressions.
+In scenarios where you want to search, filter, or navigate JSON data based on a structured path.
+For flexible querying of JSON data without deserializing the entire JSON document.
+These examples demonstrate how to use JSON Path expressions to retrieve data from JSON documents efficiently.

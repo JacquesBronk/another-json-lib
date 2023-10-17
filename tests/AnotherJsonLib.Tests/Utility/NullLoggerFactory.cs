@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace AJL.Tests.Utility;
+namespace AnotherJsonLib.Tests.Utility;
 
 public class NullLoggerFactory : ILoggerFactory
 {

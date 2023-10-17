@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 
-namespace AJL.Utility
+namespace AnotherJsonLib.Utility
 {
     public static partial class JsonTools
     {
