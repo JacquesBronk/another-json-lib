@@ -5,6 +5,17 @@
 /// </summary>
 public class JsonOperationException : JsonLibException
 {
-    public JsonOperationException(string message) : base(message) { }
-    public JsonOperationException(string message, Exception innerException) : base(message, innerException) { }
+    /// <summary>
+    /// Represents an exception that is thrown when a JSON operation, such as merge or diff, fails.
+    /// </summary>
+    public JsonOperationException(string message) : base(message)
+    {
+    }
+
+    /// <summary>
+    /// Represents an exception that occurs during a JSON-related operation such as formatting, patch generation, or manipulation.
+    /// </summary>
+    public JsonOperationException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }

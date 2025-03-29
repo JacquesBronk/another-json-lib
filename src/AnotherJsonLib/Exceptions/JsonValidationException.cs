@@ -5,6 +5,17 @@
 /// </summary>
 public class JsonValidationException : JsonLibException
 {
-    public JsonValidationException(string message) : base(message) { }
-    public JsonValidationException(string message, Exception innerException) : base(message, innerException) { }
+    /// <summary>
+    /// Exception thrown when a JSON validation operation fails due to non-compliance with a given schema.
+    /// </summary>
+    public JsonValidationException(string message) : base(message)
+    {
+    }
+
+    /// <summary>
+    /// Exception thrown when a JSON validation operation fails due to non-compliance with a given schema.
+    /// </summary>
+    public JsonValidationException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }

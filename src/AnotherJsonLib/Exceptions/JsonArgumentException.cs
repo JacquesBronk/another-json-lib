@@ -5,6 +5,17 @@
 /// </summary>
 public class JsonArgumentException : JsonLibException
 {
+    /// <summary>
+    /// Exception thrown when an invalid argument is provided in a JSON-related operation.
+    /// Inherits from <see cref="JsonLibException"/>.
+    /// </summary>
     public JsonArgumentException(string message) : base(message) { }
-    public JsonArgumentException(string message, Exception innerException) : base(message, innerException) { }
+
+    /// <summary>
+    /// Exception thrown when an invalid argument is provided during a JSON operation.
+    /// Inherits from <see cref="JsonLibException"/>.
+    /// </summary>
+    public JsonArgumentException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }

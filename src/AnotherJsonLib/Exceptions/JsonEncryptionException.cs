@@ -8,7 +8,8 @@ public class JsonEncryptionException : JsonLibException
     /// <summary>
     /// Initializes a new instance of the JsonEncryptionException class.
     /// </summary>
-    public JsonEncryptionException() : base() { }
+    public JsonEncryptionException()
+    { }
     
     /// <summary>
     /// Initializes a new instance of the JsonEncryptionException class with a specified error message.
