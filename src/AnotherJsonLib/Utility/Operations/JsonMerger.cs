@@ -371,7 +371,7 @@ public static class JsonMerger
         if (string.IsNullOrWhiteSpace(originalJson) || string.IsNullOrWhiteSpace(patchJson))
         {
             Logger.LogDebug("Cannot merge with null or empty JSON strings");
-            result = originalJson ?? string.Empty;
+            result = originalJson;
             return false;
         }
     
