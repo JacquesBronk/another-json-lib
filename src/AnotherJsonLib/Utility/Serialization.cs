@@ -38,7 +38,7 @@ public static class Serialization
     private static string ToJsonInternal<T>(T data, JsonSerializerOptions? options = null, bool useDiagnosticTracker = false)
     {
         options ??= DefaultSerializerSettings;
-        const string operationName = "Serialize.ToJson";
+        const string? operationName = "Serialize.ToJson";
         
         if (useDiagnosticTracker)
         {
@@ -97,7 +97,7 @@ public static class Serialization
     private static T? FromJsonInternal<T>(string json, JsonSerializerOptions? options = null, bool useDiagnosticTracker = false)
     {
         options ??= DefaultSerializerSettings;
-        const string operationName = "Serialize.FromJson";
+        const string? operationName = "Serialize.FromJson";
         
         if (useDiagnosticTracker)
         {
