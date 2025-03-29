@@ -1,4 +1,4 @@
-﻿namespace AnotherJsonLib.Helpers;
+﻿namespace AnotherJsonLib.Utility;
 
 /// <summary>
 /// Helpers for working with JsonDocument objects.
