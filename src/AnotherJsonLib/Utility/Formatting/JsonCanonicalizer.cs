@@ -1,10 +1,10 @@
-﻿using AnotherJsonLib.Exceptions;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
-using System.Text.Encodings.Web;
-using System.Text.Json;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Formatting;
 
 /// <summary>
 /// Provides functionality to canonicalize JSON strings to ensure consistent formatting and ordering.

@@ -2,10 +2,10 @@
 using System.Security.Cryptography;
 using System.Text;
 using AnotherJsonLib.Exceptions;
-using Microsoft.Extensions.Logging;
 using AnotherJsonLib.Infra;
+using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Security;
 
 /// <summary>
 /// Provides encryption and decryption functionality for JSON strings.

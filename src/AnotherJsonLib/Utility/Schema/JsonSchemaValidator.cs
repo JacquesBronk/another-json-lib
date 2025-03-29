@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using AnotherJsonLib.Domain;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Schema;
 
 /// <summary>
 /// A JSON Schema validator that supports a subset of JSON Schema keywords, including:

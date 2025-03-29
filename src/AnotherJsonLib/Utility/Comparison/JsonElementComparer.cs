@@ -1,9 +1,9 @@
 using System.Text.Json;
 using AnotherJsonLib.Exceptions;
-using Microsoft.Extensions.Logging;
 using AnotherJsonLib.Infra;
+using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Comparison;
 
 /// <summary>
 /// Provides comparison functionality for JsonElement objects with customizable options for

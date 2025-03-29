@@ -3,9 +3,10 @@ using System.Security.Cryptography;
 using System.Text;
 using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
+using AnotherJsonLib.Utility.Formatting;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Security;
 
 /// <summary>
 /// Provides functionality for digitally signing and verifying JSON data for security and tamper protection.

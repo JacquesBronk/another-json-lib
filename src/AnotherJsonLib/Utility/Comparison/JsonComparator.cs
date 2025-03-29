@@ -2,9 +2,10 @@
 using System.Text.Json;
 using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
+using AnotherJsonLib.Utility.Formatting;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Comparison;
 
 /// <summary>
 /// Provides functionality for comparing JSON strings with various comparison options.

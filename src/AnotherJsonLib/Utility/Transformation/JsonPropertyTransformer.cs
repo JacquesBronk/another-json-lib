@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using AnotherJsonLib.Infra;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Transformation;
 
  public static class JsonPropertyTransformer
     {

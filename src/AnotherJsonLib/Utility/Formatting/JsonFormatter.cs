@@ -1,10 +1,10 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using AnotherJsonLib.Exceptions;
-using Microsoft.Extensions.Logging;
 using AnotherJsonLib.Infra;
+using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Formatting;
 
 /// <summary>
 /// Provides methods to format JSON strings, including minification and prettification.

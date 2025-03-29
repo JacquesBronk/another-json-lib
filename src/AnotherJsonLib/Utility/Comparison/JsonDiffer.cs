@@ -2,10 +2,10 @@
 using System.Text.Json;
 using AnotherJsonLib.Domain;
 using AnotherJsonLib.Exceptions;
-using Microsoft.Extensions.Logging;
 using AnotherJsonLib.Infra;
+using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Comparison;
 
 /// <summary>
 /// Provides functionality to compute differences between JSON strings,

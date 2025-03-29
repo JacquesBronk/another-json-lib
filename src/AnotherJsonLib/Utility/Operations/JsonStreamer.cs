@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Operations;
 
 public static class JsonStreamer
 {

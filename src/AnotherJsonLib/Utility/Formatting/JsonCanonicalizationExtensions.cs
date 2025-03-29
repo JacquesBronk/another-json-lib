@@ -3,7 +3,7 @@ using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Formatting;
 
 /// <summary>
 /// Provides caching extensions for JSON canonicalization operations.

@@ -3,7 +3,7 @@ using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Transformation;
 
 /// <summary>
 /// Provides functionality for transforming JSON elements recursively with customizable transformation functions.

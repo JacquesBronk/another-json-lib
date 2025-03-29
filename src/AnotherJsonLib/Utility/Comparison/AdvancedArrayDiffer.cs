@@ -4,7 +4,7 @@ using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Comparison;
 
 /// <summary>
 /// Provides advanced diffing capabilities for JSON arrays.

@@ -5,7 +5,7 @@ using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Operations;
 
 /// <summary>
 /// Generates JSON Patch documents according to RFC 6902 standard by comparing two JSON objects.

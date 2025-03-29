@@ -1,11 +1,11 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Operations;
 
 /// <summary>
 /// Provides powerful JSON Path querying capabilities for extracting and navigating data in JSON documents.

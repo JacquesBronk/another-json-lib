@@ -2,6 +2,9 @@
 using System.Text.Json;
 using Shouldly;
 using AnotherJsonLib.Utility;
+using AnotherJsonLib.Utility.Comparison;
+using AnotherJsonLib.Utility.Formatting;
+using AnotherJsonLib.Utility.Operations;
 
 namespace AnotherJsonLib.Tests;
 

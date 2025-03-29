@@ -5,7 +5,7 @@ using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Infra;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Utility;
+namespace AnotherJsonLib.Utility.Compression;
 
 /// <summary>
 /// Provides methods for compressing and decompressing JSON data using various compression algorithms.
