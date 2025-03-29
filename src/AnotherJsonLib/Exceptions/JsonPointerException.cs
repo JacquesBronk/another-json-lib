@@ -9,7 +9,8 @@ public class JsonPointerException : JsonLibException
     /// <summary>
     /// Initializes a new instance of the JsonPointerException class.
     /// </summary>
-    public JsonPointerException() : base() { }
+    public JsonPointerException()
+    { }
     
     /// <summary>
     /// Initializes a new instance of the JsonPointerException class with a specified error message.

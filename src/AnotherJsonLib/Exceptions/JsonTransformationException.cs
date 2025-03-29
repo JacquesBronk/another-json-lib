@@ -10,7 +10,8 @@ public class JsonTransformationException : JsonLibException
     /// <summary>
     /// Initializes a new instance of the JsonTransformationException class.
     /// </summary>
-    public JsonTransformationException() : base() { }
+    public JsonTransformationException()
+    { }
     
     /// <summary>
     /// Initializes a new instance of the JsonTransformationException class with a specified error message.
