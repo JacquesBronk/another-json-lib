@@ -13,7 +13,7 @@ public class StringComparisonEqualityComparer : IEqualityComparer<byte>
     {
         return string.Equals(x, y, comparison);
     }
-    
+
     public bool Equals(byte x, byte y)
     {
         return x.Equals(y);
@@ -23,7 +23,7 @@ public class StringComparisonEqualityComparer : IEqualityComparer<byte>
     {
         return obj.GetHashCode();
     }
-    
+
     public int GetHashCode(string obj)
     {
         return obj?.GetHashCode() ?? 0;
@@ -32,24 +32,16 @@ public class StringComparisonEqualityComparer : IEqualityComparer<byte>
     public bool Equals(byte[] x, byte[] y)
     {
         if (x == y)
-        {
             return true;
-        }
-
         if (x.Length != y.Length)
-        {
             return false;
-        }
-
         return x.SequenceEqual(y, new StringComparisonEqualityComparer(comparison));
     }
 
     public int GetHashCode(byte[] obj)
     {
         if (obj == null)
-        {
             throw new ArgumentNullException(nameof(obj));
-        }
 
         int hash = 17;
         foreach (byte b in obj)

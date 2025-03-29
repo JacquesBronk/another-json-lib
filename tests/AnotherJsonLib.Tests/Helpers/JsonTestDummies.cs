@@ -1,8 +1,8 @@
 using System.Text.Json;
+using AnotherJsonLib.Infra;
 using AnotherJsonLib.Tests.ValueObjects;
 using Bogus;
 using Microsoft.Extensions.Logging;
-using LoggerFactory = AnotherJsonLib.Infra.LoggerFactory;
 
 namespace AnotherJsonLib.Tests.Helpers;
 
@@ -62,7 +62,7 @@ public static class JsonTestDummies
         catch (Exception ex)
         {
             // Handle any exceptions here
-           var logger = LoggerFactory.Instance.GetLogger(nameof(JsonTestDummies));
+           var logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonTestDummies));
            logger.LogError(ex, "Error deleting file");
         }
     }

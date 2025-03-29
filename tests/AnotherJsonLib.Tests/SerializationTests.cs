@@ -2,23 +2,15 @@ using System.Diagnostics;
 using AnotherJsonLib.Infra;
 using AnotherJsonLib.Tests.Helpers;
 using AnotherJsonLib.Tests.ValueObjects;
-using FluentAssertions;
+using AnotherJsonLib.Utility;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
+using Shouldly;
 using Xunit.Abstractions;
-using LoggerFactory = AnotherJsonLib.Infra.LoggerFactory;
 
 namespace AnotherJsonLib.Tests;
 
-public class SerializationTests
+public class SerializationTests(ITestOutputHelper testOutputHelper)
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-
-    public SerializationTests(ITestOutputHelper testOutputHelper)
-    {
-        _testOutputHelper = testOutputHelper;
-    }
-
     [Fact]
     public void ToJson_SerializeSimpleObject_ReturnsValidJson()
     {
@@ -29,9 +21,9 @@ public class SerializationTests
         var json = simpleObject.ToJson();
 
         // Assert
-        json.Should().NotBeNullOrEmpty();
-        json.Should().Contain("Id");
-        json.Should().Contain("Name");
+        json.ShouldNotBeNullOrEmpty();
+        json.ShouldContain("Id");
+        json.ShouldContain("Name");
     }
 
     [Fact]
@@ -45,8 +37,8 @@ public class SerializationTests
         var deserializedObject = json.FromJson<SimpleObject>();
 
         // Assert
-        deserializedObject.Should().NotBeNull();
-        deserializedObject.Should().BeEquivalentTo(simpleObject);
+        deserializedObject.ShouldNotBeNull();
+        deserializedObject.ShouldBeEquivalentTo(simpleObject);
     }
 
     // Similar tests for ComplexObject and LargeObject serialization and deserialization.
@@ -63,8 +55,8 @@ public class SerializationTests
         stopwatch.Stop();
 
         // Assert
-        action.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromMilliseconds(100)); // Adjust as needed
-        action.Should().NotThrow();
+        stopwatch.ElapsedMilliseconds.ShouldBeLessThanOrEqualTo(100); // Adjust as needed
+        action.ShouldNotThrow();
     }
 
     [Fact]
@@ -80,22 +72,22 @@ public class SerializationTests
         stopwatch.Stop();
 
         // Assert
-        action.ExecutionTime().Should().BeLessOrEqualTo(TimeSpan.FromMilliseconds(100)); // Adjust as needed
-        action.Should().NotThrow();
+        stopwatch.ElapsedMilliseconds.ShouldBeLessThanOrEqualTo(100); // Adjust as needed
+        action.ShouldNotThrow();
     }
 
     [Fact]
     public void LoggerFactory_GetLogger_ShouldReturnLoggerInstance()
     {
         // Arrange
-        var loggerFactory = LoggerFactory.Instance;
+        var loggerFactory = JsonLoggerFactory.Instance;
 
         // Act
         var logger = loggerFactory.GetLogger<SerializationTests>();
 
         // Assert
-        logger.Should().NotBeNull();
-        logger.Should().BeAssignableTo<ILogger>();
+        logger.ShouldNotBeNull();
+        logger.ShouldBeAssignableTo<ILogger>();
     }
 
     // You can also consider tests to ensure proper exception handling/logging when serialization/deserialization fails.
@@ -112,7 +104,7 @@ public class SerializationTests
         // Assert
         // Check if the error was logged, e.g., using a logger spy or mock.
         // json should be empty or contain an error message.
-        json.Should().Be("{}");
+        json.ShouldBe("{}");
     }
 
     [Fact]
@@ -126,7 +118,7 @@ public class SerializationTests
 
         // Assert
         // Check if the error was logged, e.g., using a logger spy or mock.
-        deserializedObject.Should().BeNull();
+        deserializedObject.ShouldBeNull();
     }
     
         [Fact]
@@ -139,9 +131,9 @@ public class SerializationTests
             var json = simpleObject.ToJson();
 
             // Assert
-            json.Should().NotBeNullOrEmpty();
-            json.Should().Contain("\"Id\"");
-            json.Should().Contain("\"Name\"");
+            json.ShouldNotBeNullOrEmpty();
+            json.ShouldContain("\"Id\"");
+            json.ShouldContain("\"Name\"");
         }
 
         [Fact]
@@ -154,7 +146,7 @@ public class SerializationTests
             var json = invalidObject.ToJson();
 
             // Assert
-            json.Should().Be("{}"); // Expect an empty JSON object
+            json.ShouldBe("{}"); // Expect an empty JSON object
         }
 
         [Fact]
@@ -167,7 +159,7 @@ public class SerializationTests
             var json = nullObject.ToJson();
 
             // Assert
-            json.Should().Be("null"); // Expect the JSON representation of null
+            json.ShouldBe("null"); // Expect the JSON representation of null
         }
 
 
@@ -185,11 +177,11 @@ public class SerializationTests
 
             // Act & Assert
             var elapsedMilliseconds = stopwatch.ElapsedMilliseconds;
-            _testOutputHelper.WriteLine($"Serialization performance: {elapsedMilliseconds} ms for 10000 objects");
+            testOutputHelper.WriteLine($"Serialization performance: {elapsedMilliseconds} ms for 10000 objects");
 
             // You can set a performance threshold and assert that the serialization time is within that threshold
             // For example:
-            elapsedMilliseconds.Should().BeLessOrEqualTo(120); // Check if it's less than or equal to 120 ms
+            elapsedMilliseconds.ShouldBeLessThanOrEqualTo(120); // Check if it's less than or equal to 120 ms
         }
 
 }

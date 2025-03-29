@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
-using FluentAssertions;
+using Shouldly;
 using AnotherJsonLib.Utility;
 
 namespace AnotherJsonLib.Tests;
@@ -18,7 +18,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2);
 
         // Assert
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2);
 
         // Assert
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2);
 
         // Assert
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2, ignoreCase: true);
 
         // Assert
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2, ignoreCase: true);
 
         // Assert
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2, ignoreWhitespace: true);
 
         // Assert
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class JsonToolsTests
         bool result = json1.AreEqual(json2, ignoreWhitespace: true);
 
         // Assert
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class JsonToolsTests
         var differences = json1.FindDifferences(json2);
 
         // Assert
-        differences.Should().BeEmpty();
+        differences.ShouldBeEmpty();
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public class JsonToolsTests
         var differences = json1.FindDifferences(json2);
 
         // Assert
-        differences.Should().ContainKey("City").And
-            .BeEquivalentTo(new Dictionary<string, object> {{"City", "New York"}});
+        differences.ShouldContainKey("City");
+        differences["City"].ShouldBe("New York");
     }
 
     [Fact]
@@ -144,15 +144,13 @@ public class JsonToolsTests
         // Act
         var differences = json1.FindDifferences(json2);
 
-
         // Assert
-        differences.Should().BeEquivalentTo(new Dictionary<string, object>
+        differences.ShouldBe(new Dictionary<string, object>
         {
             {"Name", "Jane"},
             {"Age", 25}
-        }, options => options.WithStrictOrdering());
+        });
     }
-
 
     [Fact]
     public void FindDifferences_ShouldReturnEmptyDictionary_WhenJsonsAreEmpty()
@@ -165,7 +163,7 @@ public class JsonToolsTests
         var differences = json1.FindDifferences(json2);
 
         // Assert
-        differences.Should().BeEmpty();
+        differences.ShouldBeEmpty();
     }
 
     [Fact]
@@ -179,9 +177,9 @@ public class JsonToolsTests
         var differences = json1.FindDifferences(json2);
 
         // Assert
-        differences.Should().ContainKey("Age").And.BeEquivalentTo(new Dictionary<string, object> {{"Age", null!}});
+        differences.ShouldContainKey("Age");
+        differences["Age"].ShouldBe(null);
     }
-
 
     [Fact]
     public void QueryJsonElement_ShouldReturnMatchingElement_WhenJsonPathHasDescendantsOperator()
@@ -195,7 +193,8 @@ public class JsonToolsTests
         var results = jsonDocument.QueryJsonElement(jsonPath).ToList();
 
         // Assert
-        results.Should().ContainSingle().Which!.Value.GetString().Should().Be("New York");
+        results.Count.ShouldBe(1);
+        results.Single()?.GetString().ShouldBe("New York");
     }
 
     [Fact]
@@ -205,11 +204,13 @@ public class JsonToolsTests
         var json = "{\"Items\":[{\"Name\":\"Item1\"},{\"Name\":\"Item2\"}]}";
         var jsonPath = "$.Items[1].Name";
         var jsonDocument = JsonDocument.Parse(json);
+        
         // Act
         var result = jsonDocument.QueryJsonElement(jsonPath).ToList();
 
         // Assert
-        result.Should().ContainSingle().Which!.Value.GetProperty("Name").ToString().Should().Be("Item2");
+        result.Count.ShouldBe(1);
+        result.Single()?.GetProperty("Name").ToString().ShouldBe("Item2");
     }
 
     [Fact]
@@ -219,11 +220,13 @@ public class JsonToolsTests
         var json = "{\"Name\":\"John\",\"Age\":30}";
         var jsonPath = "$.Name";
         var jsonDocument = JsonDocument.Parse(json);
+        
         // Act
-        var results = jsonDocument.QueryJsonElement(jsonPath).ToList(); // Materialize the results
+        var results = jsonDocument.QueryJsonElement(jsonPath).ToList();
 
         // Assert
-        results.Should().ContainSingle().Which!.Value.GetString().Should().Be("John");
+        results.Count.ShouldBe(1);
+        results.Single()?.GetString().ShouldBe("John");
     }
 
     [Fact]
@@ -233,29 +236,28 @@ public class JsonToolsTests
         var json = "{\"Numbers\":[1,2,3,4,5]}";
         var jsonPath = "$.Numbers[0,2,4]";
         var jsonDocument = JsonDocument.Parse(json);
+        
         // Act
         var result = jsonDocument.QueryJsonElement(jsonPath).ToList();
 
         // Assert
-        result.Should().HaveCount(3);
-        result.Select(e => e!.Value.GetInt32()).Should().ContainInOrder(1, 3, 5);
+        result.Count.ShouldBe(3);
+        result.Select(e => e!.Value.GetInt32())
+              .ShouldBe(new List<int> { 1, 3, 5 });
     }
 
     [Theory]
     [InlineData("{\"name\":\"John\",\"age\":30}", "{\"age\":40}", "{\"name\":\"John\",\"age\":40}")]
-    [InlineData("{\"name\":\"John\",\"age\":30,\"city\":\"New York\"}", "{\"age\":40}",
-        "{\"name\":\"John\",\"age\":40,\"city\":\"New York\"}")]
-    [InlineData("{\"name\":\"John\",\"age\":30}", "{\"name\":\"Doe\",\"city\":\"New York\"}",
-        "{\"name\":\"Doe\",\"age\":30,\"city\":\"New York\"}")]
-    [InlineData("{\"names\":[\"John\",\"Alice\"],\"ages\":[30,25]}", "{\"names\":[\"Bob\"],\"ages\":[35,28,22]}",
-        "{\"names\":[\"John\",\"Alice\",\"Bob\"],\"ages\":[30,25,35,28,22]}")]
+    [InlineData("{\"name\":\"John\",\"age\":30,\"city\":\"New York\"}", "{\"age\":40}", "{\"name\":\"John\",\"age\":40,\"city\":\"New York\"}")]
+    [InlineData("{\"name\":\"John\",\"age\":30}", "{\"name\":\"Doe\",\"city\":\"New York\"}", "{\"name\":\"Doe\",\"age\":30,\"city\":\"New York\"}")]
+    [InlineData("{\"names\":[\"John\",\"Alice\"],\"ages\":[30,25]}", "{\"names\":[\"Bob\"],\"ages\":[35,28,22]}", "{\"names\":[\"John\",\"Alice\",\"Bob\"],\"ages\":[30,25,35,28,22]}")]
     public void Merge_ShouldMergeJsonStrings(string originalJson, string patchJson, string expectedJson)
     {
         // Act
         var mergedJson = originalJson.Merge(patchJson);
 
         // Assert
-        mergedJson.Should().Be(expectedJson);
+        mergedJson.ShouldBe(expectedJson);
     }
 
     [Fact]
@@ -266,8 +268,7 @@ public class JsonToolsTests
         string patchJson = "{\"age\":40}";
 
         // Act & Assert
-        Action action = () => originalJson.Merge(patchJson);
-        action.Should().Throw<ArgumentNullException>();
+        Should.Throw<ArgumentNullException>(() => originalJson.Merge(patchJson));
     }
 
     [Fact]
@@ -278,8 +279,7 @@ public class JsonToolsTests
         string patchJson = null!;
 
         // Act & Assert
-        Action action = () => originalJson.Merge(patchJson);
-        action.Should().Throw<ArgumentNullException>();
+        Should.Throw<ArgumentNullException>(() => originalJson.Merge(patchJson));
     }
 
     [Theory]
@@ -290,13 +290,11 @@ public class JsonToolsTests
     [InlineData("{}", "{}")]
     public void Minify_ShouldMinifyJsonString(string originalJson, string expectedJson)
     {
-        // Arrange
-
         // Act
         var minifiedJson = originalJson.Minify();
 
         // Assert
-        minifiedJson.Should().Be(expectedJson);
+        minifiedJson.ShouldBe(expectedJson);
     }
 
     [Fact]
@@ -306,21 +304,19 @@ public class JsonToolsTests
         string invalidJson = "{name\":\"John\",\"age\":30}";
 
         // Act & Assert
-        Action action = () => invalidJson.Minify();
-        action.Should().Throw<JsonException>().WithMessage("*An error occurred while minifying the JSON.*");
+        var exception = Should.Throw<JsonException>(() => invalidJson.Minify());
+        exception.Message.ShouldContain("An error occurred while minifying the JSON.");
     }
 
     [Fact]
-    public void Minify_ShouldThrowArgumentNullException_WhenJsonIsNull()
+    public void Minify_ShouldThrowJsonException_WhenJsonIsNull()
     {
         // Arrange
         string json = null!;
 
         // Act & Assert
-        Action action = () => json.Minify();
-        action.Should().Throw<JsonException>();
+        Should.Throw<JsonException>(() => json.Minify());
     }
-
 
     [Fact]
     public void EvaluatePointer_WithValidPointer_ReturnsExpectedValue()
@@ -338,8 +334,8 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("/name");
 
         // Assert
-        result.HasValue.Should().BeTrue();
-        result!.Value.GetString().Should().Be("John");
+        result.HasValue.ShouldBeTrue();
+        result!.Value.GetString().ShouldBe("John");
     }
 
     [Fact]
@@ -355,8 +351,8 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("/scores/1");
 
         // Assert
-        result.HasValue.Should().BeTrue();
-        result!.Value.GetInt32().Should().Be(20);
+        result.HasValue.ShouldBeTrue();
+        result!.Value.GetInt32().ShouldBe(20);
     }
 
     [Fact]
@@ -372,7 +368,7 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("/scores/3");
 
         // Assert
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -391,8 +387,8 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("/person/age");
 
         // Assert
-        result.HasValue.Should().BeTrue();
-        result!.Value.GetInt32().Should().Be(25);
+        result.HasValue.ShouldBeTrue();
+        result!.Value.GetInt32().ShouldBe(25);
     }
 
     [Fact]
@@ -409,7 +405,7 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("/city");
 
         // Assert
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -426,7 +422,7 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer("");
 
         // Assert
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -436,7 +432,7 @@ public class JsonToolsTests
         var result = JsonTools.EvaluatePointer(null, "/name");
 
         // Assert
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -453,7 +449,7 @@ public class JsonToolsTests
         var result = doc.EvaluatePointer(null!);
 
         // Assert
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -483,9 +479,8 @@ public class JsonToolsTests
     ""City"": ""New York""
   }
 }";
-        prettifiedJson.Should().Be(expectedJson);
+        prettifiedJson.ShouldBe(expectedJson);
     }
-
 
     [Fact]
     public void Prettify_WithNullData_ReturnsEmptyString()
@@ -497,7 +492,7 @@ public class JsonToolsTests
         var prettifiedJson = data.Prettify();
 
         // Assert
-        prettifiedJson.Should().Be("null"); //Json Representation of Null
+        prettifiedJson.ShouldBe("null"); // JSON representation of null
     }
 
     [Fact]
@@ -506,7 +501,7 @@ public class JsonToolsTests
         // Arrange
         string jsonFilePath = "largeFile.json";
         string jsonContent = "{\"name\":\"John\",\"age\":30}";
-        File.WriteAllText(jsonFilePath, jsonContent); // Write the JSON content to the file
+        File.WriteAllText(jsonFilePath, jsonContent);
 
         var expectedTokens = new[]
         {
@@ -520,8 +515,8 @@ public class JsonToolsTests
         jsonFilePath.StreamJsonFile(Callback);
 
         // Assert
-        actualTokens.Should().BeEquivalentTo(expectedTokens);
-
+        actualTokens.ShouldBe(expectedTokens);
+        
         // Cleanup
         File.Delete(jsonFilePath);
     }
@@ -545,7 +540,7 @@ public class JsonToolsTests
         jsonStream.StreamJson(callback!);
 
         // Assert
-        actualTokens.Should().BeEquivalentTo(expectedTokens);
+        actualTokens.ShouldBe(expectedTokens);
     }
 
     [Theory]
@@ -561,7 +556,7 @@ public class JsonToolsTests
         var result = comparer.Equals(str1, str2);
 
         // Assert
-        result.Should().Be(expectedResult);
+        result.ShouldBe(expectedResult);
     }
 
     [Theory]
@@ -576,7 +571,7 @@ public class JsonToolsTests
         var result = comparer.Equals(byte1, byte2);
 
         // Assert
-        result.Should().Be(expectedResult);
+        result.ShouldBe(expectedResult);
     }
 
     [Theory]
@@ -593,7 +588,7 @@ public class JsonToolsTests
         var result = comparer.Equals(bytes1, bytes2);
 
         // Assert
-        result.Should().Be(expectedResult);
+        result.ShouldBe(expectedResult);
     }
 
     [Theory]
@@ -609,7 +604,7 @@ public class JsonToolsTests
         var hashCode2 = comparer.GetHashCode(str);
 
         // Assert
-        hashCode1.Should().Be(hashCode2);
+        hashCode1.ShouldBe(hashCode2);
     }
 
     [Theory]
@@ -624,7 +619,7 @@ public class JsonToolsTests
         var hashCode = comparer.GetHashCode(bytes);
 
         // Assert
-        hashCode.Should().NotBe(0);
+        hashCode.ShouldNotBe(0);
     }
 
     [Theory]
@@ -632,7 +627,7 @@ public class JsonToolsTests
     [InlineData("true", "true", true)]
     [InlineData("false", "false", true)]
     [InlineData("42.0", "42", true)]
-    [InlineData("\"foo\"", "\"foo\"", true)] // Updated this line
+    [InlineData("\"foo\"", "\"foo\"", true)]
     [InlineData("[]", "[]", true)]
     [InlineData("[1, 2, 3]", "[3, 2, 1]", false)]
     [InlineData("{}", "{}", true)]
@@ -654,7 +649,7 @@ public class JsonToolsTests
         var result = comparer.Equals(element1, element2);
 
         // Assert
-        result.Should().Be(expected);
+        result.ShouldBe(expected);
     }
 
     [Fact]
@@ -670,7 +665,7 @@ public class JsonToolsTests
         var hashCode2 = comparer.GetHashCode(element2);
 
         // Assert
-        hashCode1.Should().Be(hashCode2);
+        hashCode1.ShouldBe(hashCode2);
     }
 
     [Fact]
@@ -686,6 +681,6 @@ public class JsonToolsTests
         var hashCode2 = comparer.GetHashCode(element2);
 
         // Assert
-        hashCode1.Should().NotBe(hashCode2);
+        hashCode1.ShouldNotBe(hashCode2);
     }
 }
