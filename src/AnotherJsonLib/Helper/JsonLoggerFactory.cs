@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace AnotherJsonLib.Infra;
+namespace AnotherJsonLib.Helper;
 
 /// <summary>
 /// Provides logging services for AnotherJsonLib using native .NET logging.

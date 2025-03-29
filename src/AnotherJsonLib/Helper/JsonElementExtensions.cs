@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace AnotherJsonLib.Infra;
+namespace AnotherJsonLib.Helper;
 
 /// <summary>
 /// Extension methods for JsonElement.

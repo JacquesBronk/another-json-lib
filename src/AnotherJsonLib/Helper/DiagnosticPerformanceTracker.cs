@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace AnotherJsonLib.Infra;
+namespace AnotherJsonLib.Helper;
 
 public class DiagnosticPerformanceTracker: IDisposable
 {

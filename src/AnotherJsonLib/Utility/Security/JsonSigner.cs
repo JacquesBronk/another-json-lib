@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using AnotherJsonLib.Exceptions;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using AnotherJsonLib.Utility.Formatting;
 using Microsoft.Extensions.Logging;
 

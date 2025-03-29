@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using AnotherJsonLib.Domain;
 using AnotherJsonLib.Exceptions;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Utility.Operations;

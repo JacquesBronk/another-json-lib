@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace AnotherJsonLib.Infra;
+namespace AnotherJsonLib.Helper;
 
 /// <summary>
 /// A lightweight performance tracker that logs the elapsed time of an operation via ILogger.

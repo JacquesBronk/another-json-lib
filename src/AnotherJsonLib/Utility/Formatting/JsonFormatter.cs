@@ -1,7 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using AnotherJsonLib.Exceptions;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Utility.Formatting;
@@ -121,34 +121,37 @@ public static class JsonFormatter
     public static string Minify(this string json)
     {
         using var performance = new PerformanceTracker(Logger, nameof(Minify));
-        
-        // Validate input
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
-        
+    
         return ExceptionHelpers.SafeExecute(() => 
-        {
-            int originalLength = json.Length;
-            Logger.LogDebug("Minifying JSON string of length {Length}", originalLength);
+            {
+                // Move validation inside SafeExecute to catch all exceptions consistently
+                ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
+        
+                int originalLength = json.Length;
+                Logger.LogDebug("Minifying JSON string of length {Length}", originalLength);
+        
+                using var doc = JsonDocument.Parse(json);
+                string result = JsonSerializer.Serialize(doc.RootElement, MinifyOptions);
+        
+                int newLength = result.Length;
+                float compressionRatio = originalLength > 0 ? (float)newLength / originalLength : 1;
+        
+                Logger.LogDebug("Successfully minified JSON from {OriginalLength} to {MinifiedLength} characters " +
+                                "(compression ratio: {CompressionRatio:P2})",
+                    originalLength, newLength, compressionRatio);
             
-            using var doc = JsonDocument.Parse(json);
-            string result = JsonSerializer.Serialize(doc.RootElement, MinifyOptions);
+                return result;
+            }, 
+            (ex, msg) => {
+                if (ex is ArgumentException argEx)
+                    return new JsonArgumentException($"Failed to minify JSON: {argEx.Message}", argEx);
             
-            int newLength = result.Length;
-            float compressionRatio = originalLength > 0 ? (float)newLength / originalLength : 1;
+                if (ex is JsonException jsonEx)
+                    return new JsonParsingException("Failed to minify JSON: Invalid JSON format", jsonEx);
             
-            Logger.LogDebug("Successfully minified JSON from {OriginalLength} to {MinifiedLength} characters " +
-                           "(compression ratio: {CompressionRatio:P2})",
-                originalLength, newLength, compressionRatio);
-                
-            return result;
-        }, 
-        (ex, msg) => {
-            if (ex is JsonException jsonEx)
-                return new JsonParsingException("Failed to minify JSON: Invalid JSON format", jsonEx);
-                
-            return new JsonFormattingException($"Failed to minify JSON: {msg}", ex);
-        }, 
-        "Failed to minify JSON") ?? json;
+                return new JsonFormattingException($"Failed to minify JSON: {msg}", ex);
+            }, 
+            "Failed to minify JSON") ?? string.Empty; // Use empty string as fallback, not original JSON
     }
 
     /// <summary>
@@ -437,23 +440,13 @@ public static class JsonFormatter
     /// <returns>True if minification was successful; otherwise, false.</returns>
     public static bool TryMinify(this string json, out string result)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            result = string.Empty;
-            return false;
-        }
-        
-        try
-        {
-            result = Minify(json);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogDebug(ex, "Error minifying JSON");
-            result = json;  // Return original on error
-            return false;
-        }
+        result = ExceptionHelpers.SafeExecuteWithDefault(
+            () => Minify(json),
+            string.Empty,
+            "Failed to minify JSON"
+        ) ?? string.Empty;
+    
+        return !string.IsNullOrEmpty(result);
     }
     
     /// <summary>

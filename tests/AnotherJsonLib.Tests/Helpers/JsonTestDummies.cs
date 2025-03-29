@@ -1,5 +1,5 @@
 using System.Text.Json;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using AnotherJsonLib.Tests.ValueObjects;
 using Bogus;
 using Microsoft.Extensions.Logging;

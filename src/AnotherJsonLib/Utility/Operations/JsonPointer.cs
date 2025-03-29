@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using AnotherJsonLib.Exceptions;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Utility.Operations;
@@ -52,7 +52,7 @@ namespace AnotherJsonLib.Utility.Operations;
 public static class JsonPointer
 {
     private static readonly ILogger Logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonPointer));
-    
+
     /// <summary>
     /// Evaluates a JSON Pointer against a JsonDocument and returns the referenced JsonElement.
     /// 
@@ -94,21 +94,23 @@ public static class JsonPointer
     public static JsonElement? EvaluatePointer(this JsonDocument document, string pointer)
     {
         using var performance = new PerformanceTracker(Logger, nameof(EvaluatePointer));
-        
-        // Validate inputs
-        ExceptionHelpers.ThrowIfNull(document, nameof(document));
-        ExceptionHelpers.ThrowIfNull(pointer, nameof(pointer));
-        
+
         return ExceptionHelpers.SafeExecuteWithDefault<JsonElement?>(
-            () => {
+            () =>
+            {
+                // Move validations inside the SafeExecute lambda
+                ExceptionHelpers.ThrowIfNull(document, nameof(document));
+                ExceptionHelpers.ThrowIfNull(pointer, nameof(pointer));
+
                 Logger.LogTrace("Evaluating JSON pointer: '{Pointer}'", pointer);
-                
+
                 // The empty string references the entire document.
                 if (pointer == "")
                     return document.RootElement;
 
                 if (!pointer.StartsWith("/"))
-                    throw new JsonPointerException($"Invalid JSON Pointer format: '{pointer}'. A non-empty JSON Pointer must start with '/'");
+                    throw new JsonPointerException(
+                        $"Invalid JSON Pointer format: '{pointer}'. A non-empty JSON Pointer must start with '/'");
 
                 // Split the pointer into tokens.
                 // The first token is always empty because the pointer starts with '/'
@@ -140,7 +142,8 @@ public static class JsonPointer
                                 current = current[index];
                             else
                             {
-                                Logger.LogDebug("Array index {Index} out of bounds at position {Position}. Array length: {Length}", 
+                                Logger.LogDebug(
+                                    "Array index {Index} out of bounds at position {Position}. Array length: {Length}",
                                     index, i, current.GetArrayLength());
                                 return null; // Array index out of bounds.
                             }
@@ -154,7 +157,8 @@ public static class JsonPointer
                     else
                     {
                         // Cannot traverse further if the current element is a primitive.
-                        Logger.LogDebug("Cannot traverse beyond primitive value of type {ValueKind} at position {Position}", 
+                        Logger.LogDebug(
+                            "Cannot traverse beyond primitive value of type {ValueKind} at position {Position}",
                             current.ValueKind, i);
                         return null;
                     }
@@ -167,7 +171,7 @@ public static class JsonPointer
             $"Failed to evaluate JSON pointer '{pointer}'"
         );
     }
-    
+
     /// <summary>
     /// Attempts to evaluate a JSON Pointer against a JsonDocument.
     /// Returns false if the pointer cannot be resolved instead of throwing an exception.
@@ -202,7 +206,7 @@ public static class JsonPointer
             result = null;
             return false;
         }
-        
+
         try
         {
             result = EvaluatePointer(document, pointer);
@@ -215,7 +219,7 @@ public static class JsonPointer
             return false;
         }
     }
-    
+
     /// <summary>
     /// Creates a JSON Pointer string from path segments, properly escaping special characters.
     /// 
@@ -236,24 +240,24 @@ public static class JsonPointer
     public static string Create(params string[] segments)
     {
         ExceptionHelpers.ThrowIfNull(segments, nameof(segments));
-        
+
         using var performance = new PerformanceTracker(Logger, nameof(Create));
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
             {
-                var escapedSegments = segments.Select(segment => 
+                var escapedSegments = segments.Select(segment =>
                 {
                     ExceptionHelpers.ThrowIfNull(segment, "pointer segment");
                     // Escape special characters according to RFC6901
                     return segment.Replace("~", "~0").Replace("/", "~1");
                 });
-            
+
                 return "/" + string.Join("/", escapedSegments);
             },
             (ex, msg) => new JsonPointerException($"Failed to create JSON pointer: {msg}", ex),
             "Failed to create JSON pointer") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Appends a segment to an existing JSON Pointer string, properly escaping special characters.
     /// 
@@ -273,22 +277,22 @@ public static class JsonPointer
     {
         ExceptionHelpers.ThrowIfNull(pointer, nameof(pointer));
         ExceptionHelpers.ThrowIfNull(segment, nameof(segment));
-        
+
         using var performance = new PerformanceTracker(Logger, nameof(Append));
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
             {
                 // Escape the segment according to RFC6901
                 string escapedSegment = segment.Replace("~", "~0").Replace("/", "~1");
-            
+
                 // Handle the case when pointer is empty or just "/"
                 if (string.IsNullOrEmpty(pointer) || pointer == "/")
                     return "/" + escapedSegment;
-                
+
                 // Ensure the pointer starts with a "/"
                 if (!pointer.StartsWith("/"))
                     pointer = "/" + pointer;
-                
+
                 // Add the segment
                 return pointer + "/" + escapedSegment;
             },

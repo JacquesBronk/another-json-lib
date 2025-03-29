@@ -1,5 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Exceptions;

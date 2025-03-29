@@ -2,7 +2,7 @@
 using System.Text.Json;
 using AnotherJsonLib.Domain;
 using AnotherJsonLib.Exceptions;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Utility.Comparison;
@@ -63,7 +63,7 @@ namespace AnotherJsonLib.Utility.Comparison;
 public static class JsonDiffer
 {
     private static readonly ILogger Logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonDiffer));
-    
+
     /// <summary>
     /// Computes a bidirectional diff between two JSON strings.
     /// Returns keys added, removed, or modified (with old and new values).
@@ -113,95 +113,103 @@ public static class JsonDiffer
     /// <exception cref="JsonParsingException">Thrown when the JSON cannot be parsed.</exception>
     public static JsonDiffResult ComputeDiff(this string originalJson, string newJson)
     {
-        using var performance = new PerformanceTracker(Logger, "ComputeDiff");
-        
-        // Validate inputs
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(newJson, nameof(newJson));
-        
-        return ExceptionHelpers.SafeExecute(() => 
-        {
-            var result = new JsonDiffResult();
-            var comparer = new JsonElementComparer();
+        using var performance = new PerformanceTracker(Logger, nameof(ComputeDiff));
 
-            Logger.LogDebug("Computing diff between original JSON ({OriginalLength} chars) and new JSON ({NewLength} chars)",
-                originalJson.Length, newJson.Length);
-
-            var originalDict = originalJson.FromJson<Dictionary<string, JsonElement>>(
-                options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            var newDict = newJson.FromJson<Dictionary<string, JsonElement>>(
-                options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            ExceptionHelpers.ThrowIfNull(originalDict, nameof(originalDict));
-            ExceptionHelpers.ThrowIfNull(newDict, nameof(newDict));
-
-            // Find added or modified keys
-            Debug.Assert(newDict != null, nameof(newDict) + " != null");
-            Debug.Assert(originalDict != null, nameof(originalDict) + " != null");
-            
-            foreach (var kvp in newDict)
+        return ExceptionHelpers.SafeExecute(() =>
             {
-                if (!originalDict.ContainsKey(kvp.Key))
+                // Move validations inside SafeExecute
+                ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
+                ExceptionHelpers.ThrowIfNullOrWhiteSpace(newJson, nameof(newJson));
+
+                var result = new JsonDiffResult();
+                var comparer = new JsonElementComparer();
+
+                Logger.LogDebug(
+                    "Computing diff between original JSON ({OriginalLength} chars) and new JSON ({NewLength} chars)",
+                    originalJson.Length, newJson.Length);
+
+                var originalDict = originalJson.FromJson<Dictionary<string, JsonElement>>(
+                    options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var newDict = newJson.FromJson<Dictionary<string, JsonElement>>(
+                    options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                // Validate parsed results
+                if (originalDict == null || newDict == null)
                 {
-                    // Property exists in new but not in original - it was added
-                    var addedValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
-                    result.Added[kvp.Key] = addedValue;
-                    Logger.LogTrace("Added property: {Property} = {Value}", kvp.Key, addedValue);
+                    throw new JsonParsingException("Failed to parse one or both JSON inputs as dictionaries");
                 }
-                else if (!comparer.Equals(originalDict[kvp.Key], kvp.Value))
+
+                // Process added or modified properties
+                foreach (var kvp in newDict)
                 {
-                    // Property exists in both but values differ - it was modified
-                    var oldValue = comparer.ConvertToValueType(originalDict[kvp.Key]) ?? new JsonElement();
-                    var newValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
-                    
-                    // For nested objects, compute a nested diff
-                    JsonDiffResult? nestedDiff = null;
-                    if (originalDict[kvp.Key].ValueKind == JsonValueKind.Object && 
-                        kvp.Value.ValueKind == JsonValueKind.Object)
+                    if (!originalDict.ContainsKey(kvp.Key))
                     {
-                        string oldJson = JsonSerializer.Serialize(originalDict[kvp.Key]);
-                        string newJsonString = JsonSerializer.Serialize(kvp.Value);
-                        nestedDiff = ComputeDiff(oldJson, newJsonString);
+                        // Property exists in new but not in original - it was added
+                        var addedValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
+                        result.Added[kvp.Key] = addedValue;
+                        Logger.LogTrace("Added property: {Property} = {Value}", kvp.Key, addedValue);
                     }
-                    
-                    result.Modified[kvp.Key] = new DiffEntry
+                    else if (!comparer.Equals(originalDict[kvp.Key], kvp.Value))
                     {
-                        OldValue = oldValue,
-                        NewValue = newValue,
-                        NestedDiff = nestedDiff ?? new JsonDiffResult()
-                    };
-                    
-                    Logger.LogTrace("Modified property: {Property} from {OldValue} to {NewValue}", 
-                        kvp.Key, oldValue, newValue);
-                }
-            }
+                        // Property exists in both but values differ - it was modified
+                        var oldValue = comparer.ConvertToValueType(originalDict[kvp.Key]) ?? new JsonElement();
+                        var newValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
 
-            // Find removed keys
-            foreach (var kvp in originalDict)
-            {
-                if (!newDict.ContainsKey(kvp.Key))
+                        // For nested objects, compute a nested diff
+                        JsonDiffResult? nestedDiff = null;
+                        if (originalDict[kvp.Key].ValueKind == JsonValueKind.Object &&
+                            kvp.Value.ValueKind == JsonValueKind.Object)
+                        {
+                            string oldJson = JsonSerializer.Serialize(originalDict[kvp.Key]);
+                            string newJsonString = JsonSerializer.Serialize(kvp.Value);
+                            nestedDiff = ComputeDiff(oldJson, newJsonString);
+                        }
+
+                        result.Modified[kvp.Key] = new DiffEntry
+                        {
+                            OldValue = oldValue,
+                            NewValue = newValue,
+                            NestedDiff = nestedDiff ?? new JsonDiffResult()
+                        };
+
+                        Logger.LogTrace("Modified property: {Property} from {OldValue} to {NewValue}",
+                            kvp.Key, oldValue, newValue);
+                    }
+                }
+
+                // Process removed properties
+                foreach (var kvp in originalDict)
                 {
-                    // Property exists in original but not in new - it was removed
-                    var removedValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
-                    result.Removed[kvp.Key] = removedValue;
-                    Logger.LogTrace("Removed property: {Property} = {Value}", kvp.Key, removedValue);
+                    if (!newDict.ContainsKey(kvp.Key))
+                    {
+                        var removedValue = comparer.ConvertToValueType(kvp.Value) ?? new JsonElement();
+                        result.Removed[kvp.Key] = removedValue;
+                        Logger.LogTrace("Removed property: {Property} = {Value}", kvp.Key, removedValue);
+                    }
                 }
-            }
 
-            Logger.LogDebug("Computed JSON diff: {AddedCount} keys added, {RemovedCount} keys removed, {ModifiedCount} keys modified",
-                result.Added.Count, result.Removed.Count, result.Modified.Count);
+                Logger.LogDebug(
+                    "Computed JSON diff: {AddedCount} keys added, {RemovedCount} keys removed, {ModifiedCount} keys modified",
+                    result.Added.Count, result.Removed.Count, result.Modified.Count);
 
-            return result;
-        }, 
-        (ex, msg) => 
-        {
-            // Handle different exception types
-            if (ex is JsonException)
-                return new JsonParsingException("Invalid JSON format during diff computation.", ex);
-            
-            return new JsonOperationException("Failed to compute JSON diff: " + msg, ex);
-        }, 
-        "Failed to compute JSON diff between the provided JSON strings") ?? new JsonDiffResult();
+                return result;
+            },
+            (ex, msg) =>
+            {
+                // Handle specific exception types with appropriate custom exceptions
+                if (ex is ArgumentException argEx)
+                    return new JsonArgumentException($"Invalid argument in JSON diff computation: {argEx.Message}",
+                        argEx);
+
+                if (ex is JsonException jsonEx)
+                    return new JsonParsingException("Invalid JSON format during diff computation", jsonEx);
+
+                if (ex is JsonLibException)
+                    return (JsonLibException)ex; // Pass through our custom exceptions
+
+                return new JsonOperationException($"Failed to compute JSON diff: {msg}", ex);
+            },
+            "Failed to compute JSON diff between the provided JSON strings") ?? new JsonDiffResult();
     }
 
     /// <summary>
@@ -240,7 +248,7 @@ public static class JsonDiffer
 
         return result != null;
     }
-    
+
     /// <summary>
     /// Computes a diff between two JSON strings and returns it as a string-based report.
     /// This is useful for logging, display, or text-based output of differences.
@@ -271,20 +279,20 @@ public static class JsonDiffer
     public static string ComputeDiffReport(this string originalJson, string newJson, bool includeUnchanged = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(ComputeDiffReport));
-        
+
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(newJson, nameof(newJson));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
             {
                 // Compute the diff
                 var diff = ComputeDiff(originalJson, newJson);
-            
+
                 // Build a report
                 var report = new System.Text.StringBuilder();
                 report.AppendLine("JSON Diff Report:");
                 report.AppendLine("----------------");
-            
+
                 // Added properties
                 if (diff.Added.Count > 0)
                 {
@@ -293,9 +301,10 @@ public static class JsonDiffer
                     {
                         report.AppendLine($"  {added.Key}: {FormatValue(added.Value)}");
                     }
+
                     report.AppendLine();
                 }
-            
+
                 // Removed properties
                 if (diff.Removed.Count > 0)
                 {
@@ -304,60 +313,65 @@ public static class JsonDiffer
                     {
                         report.AppendLine($"  {removed.Key}: {FormatValue(removed.Value)}");
                     }
+
                     report.AppendLine();
                 }
-            
+
                 // Modified properties
                 if (diff.Modified.Count > 0)
                 {
                     report.AppendLine("Modified:");
                     foreach (var modified in diff.Modified.OrderBy(m => m.Key))
                     {
-                        report.AppendLine($"  {modified.Key}: {FormatValue(modified.Value.OldValue)} -> {FormatValue(modified.Value.NewValue)}");
-                    
+                        report.AppendLine(
+                            $"  {modified.Key}: {FormatValue(modified.Value.OldValue)} -> {FormatValue(modified.Value.NewValue)}");
+
                         // If there's a nested diff with changes, include it
                         if (HasNestedChanges(modified.Value.NestedDiff))
                         {
                             AppendNestedDiff(report, modified.Key, modified.Value.NestedDiff, "    ");
                         }
                     }
+
                     report.AppendLine();
                 }
-            
+
                 // No changes
                 if (diff.Added.Count == 0 && diff.Removed.Count == 0 && diff.Modified.Count == 0)
                 {
                     report.AppendLine("No differences found.");
                 }
-            
+
                 return report.ToString();
             },
             (ex, msg) => new JsonOperationException($"Failed to generate diff report: {msg}", ex),
             "Failed to generate JSON diff report") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Appends nested diff information to a report with proper indentation.
     /// </summary>
-    private static void AppendNestedDiff(System.Text.StringBuilder report, string parentPath, JsonDiffResult nestedDiff, string indent)
+    private static void AppendNestedDiff(System.Text.StringBuilder report, string parentPath, JsonDiffResult nestedDiff,
+        string indent)
     {
         // Added properties
         foreach (var added in nestedDiff.Added.OrderBy(a => a.Key))
         {
             report.AppendLine($"{indent}{parentPath}.{added.Key} (Added): {FormatValue(added.Value)}");
         }
-        
+
         // Removed properties
         foreach (var removed in nestedDiff.Removed.OrderBy(r => r.Key))
         {
             report.AppendLine($"{indent}{parentPath}.{removed.Key} (Removed): {FormatValue(removed.Value)}");
         }
-        
+
         // Modified properties
         foreach (var modified in nestedDiff.Modified.OrderBy(m => m.Key))
         {
-            report.AppendLine($"{indent}{parentPath}.{modified.Key}: {FormatValue(modified.Value.OldValue)} -> {FormatValue(modified.Value.NewValue)}");
-            
+            report.AppendLine(
+                $"{indent}{parentPath}.{modified.Key}: {FormatValue(modified.Value.OldValue)} -> {FormatValue(modified.Value.NewValue)}");
+
             // Recursive handling of nested diffs
             if (HasNestedChanges(modified.Value.NestedDiff))
             {
@@ -365,16 +379,16 @@ public static class JsonDiffer
             }
         }
     }
-    
+
     /// <summary>
     /// Checks if a nested diff contains any changes.
     /// </summary>
     private static bool HasNestedChanges(JsonDiffResult? nestedDiff)
     {
-        return nestedDiff != null && 
-              (nestedDiff.Added.Count > 0 || nestedDiff.Removed.Count > 0 || nestedDiff.Modified.Count > 0);
+        return nestedDiff != null &&
+               (nestedDiff.Added.Count > 0 || nestedDiff.Removed.Count > 0 || nestedDiff.Modified.Count > 0);
     }
-    
+
     /// <summary>
     /// Formats a value for display in the diff report.
     /// </summary>
@@ -382,37 +396,37 @@ public static class JsonDiffer
     {
         if (value == null)
             return "null";
-        
+
         if (value is string stringValue)
             return $"\"{stringValue}\"";
-        
+
         if (value is bool boolValue)
             return boolValue ? "true" : "false";
-        
+
         if (value is Dictionary<string, object?> dict)
         {
             // Format dictionary with actual content
             if (dict.Count == 0)
                 return "{}";
-            
+
             var entries = dict.Select(kvp => $"\"{kvp.Key}\": {FormatValue(kvp.Value)}");
             return $"{{{string.Join(", ", entries)}}}";
         }
-        
+
         if (value is List<object?> list)
         {
             // Format list with actual content
             if (list.Count == 0)
                 return "[]";
-            
+
             var items = list.Select(FormatValue);
             return $"[{string.Join(", ", items)}]";
         }
-        
+
         // For numeric types and others, use their string representation
         return value.ToString() ?? "null";
     }
-    
+
     /// <summary>
     /// Computes a diff and determines if there are any differences between two JSON strings.
     /// This is optimized for quickly checking if documents are different without generating a full diff report.
@@ -437,41 +451,42 @@ public static class JsonDiffer
     public static bool HasDifferences(this string originalJson, string newJson)
     {
         using var performance = new PerformanceTracker(Logger, nameof(HasDifferences));
-        
+
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(newJson, nameof(newJson));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
-        {
-            // For simple string equality, we can quickly return
-            if (originalJson == newJson)
             {
-                Logger.LogTrace("JSON strings are identical, no differences");
-                return false;
-            }
-            
-            // Parse and compare the JSON
-            using var originalDoc = JsonDocument.Parse(originalJson);
-            using var newDoc = JsonDocument.Parse(newJson);
-            
-            // Use JsonElementComparer to perform fast comparison
-            var comparer = new JsonElementComparer();
-            bool areEqual = comparer.Equals(originalDoc.RootElement, newDoc.RootElement);
-            
-            Logger.LogDebug("JSON comparison result: documents are {Result}", 
-                areEqual ? "identical" : "different");
-                
-            return !areEqual; // Return true if they are different
-        },
-        (ex, msg) => {
-            if (ex is JsonException)
-                return new JsonParsingException("Invalid JSON format during comparison.", ex);
-            
-            return new JsonOperationException($"Failed to compare JSON documents: {msg}", ex);
-        },
-        "Failed to compare JSON documents");
+                // For simple string equality, we can quickly return
+                if (originalJson == newJson)
+                {
+                    Logger.LogTrace("JSON strings are identical, no differences");
+                    return false;
+                }
+
+                // Parse and compare the JSON
+                using var originalDoc = JsonDocument.Parse(originalJson);
+                using var newDoc = JsonDocument.Parse(newJson);
+
+                // Use JsonElementComparer to perform fast comparison
+                var comparer = new JsonElementComparer();
+                bool areEqual = comparer.Equals(originalDoc.RootElement, newDoc.RootElement);
+
+                Logger.LogDebug("JSON comparison result: documents are {Result}",
+                    areEqual ? "identical" : "different");
+
+                return !areEqual; // Return true if they are different
+            },
+            (ex, msg) =>
+            {
+                if (ex is JsonException)
+                    return new JsonParsingException("Invalid JSON format during comparison.", ex);
+
+                return new JsonOperationException($"Failed to compare JSON documents: {msg}", ex);
+            },
+            "Failed to compare JSON documents");
     }
-    
+
     /// <summary>
     /// Attempts to determine if there are differences between two JSON strings without throwing exceptions.
     /// </summary>
@@ -486,7 +501,7 @@ public static class JsonDiffer
             hasDifferences = null;
             return false;
         }
-        
+
         try
         {
             hasDifferences = HasDifferences(originalJson, newJson);

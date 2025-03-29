@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using AnotherJsonLib.Infra;
+using AnotherJsonLib.Helper;
 using AnotherJsonLib.Tests.Helpers;
 using AnotherJsonLib.Tests.ValueObjects;
 using AnotherJsonLib.Utility;
