@@ -116,49 +116,53 @@ public static class JsonMerger
     public static string Merge(this string originalJson, string patchJson, MergeOptions? options = null)
     {
         using var performance = new PerformanceTracker(Logger, nameof(Merge));
-        
-        // Validate inputs
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(patchJson, nameof(patchJson));
-        
-        options ??= new MergeOptions();
-        
-        return ExceptionHelpers.SafeExecute(() => 
-        {
-            Logger.LogDebug("Merging original JSON ({OriginalLength} chars) with patch JSON ({PatchLength} chars) using strategy: {Strategy}",
-                originalJson.Length, patchJson.Length, options.ArrayMergeStrategy);
-            
-            using var originalDoc = JsonDocument.Parse(originalJson);
-            using var patchDoc = JsonDocument.Parse(patchJson);
-            
-            using var memStream = new MemoryStream();
-            using var writer = new Utf8JsonWriter(memStream, new JsonWriterOptions
+
+        return ExceptionHelpers.SafeExecute(() =>
             {
-                Indented = options.PreserveFormatting && (IsIndented(originalJson) || IsIndented(patchJson)),
-                SkipValidation = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-            
-            MergeElements(originalDoc.RootElement, patchDoc.RootElement, writer, options);
-            writer.Flush();
-            
-            string result = Encoding.UTF8.GetString(memStream.ToArray());
-            
-            Logger.LogDebug("Successfully merged JSON documents into {ResultLength} chars",
-                result.Length);
-                
-            return result;
-        }, 
-        (ex, msg) => 
-        {
-            if (ex is JsonException jsonEx)
-                return new JsonParsingException("Failed to merge JSON: Invalid JSON format", jsonEx);
-                
-            return new JsonOperationException("Failed to merge JSON: " + msg, ex);
-        }, 
-        "Failed to merge JSON documents") ?? originalJson;
+                // Validation moved inside SafeExecute
+                ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
+                ExceptionHelpers.ThrowIfNullOrWhiteSpace(patchJson, nameof(patchJson));
+
+                options ??= new MergeOptions();
+
+                Logger.LogDebug(
+                    "Merging original JSON ({OriginalLength} chars) with patch JSON ({PatchLength} chars) using strategy: {Strategy}",
+                    originalJson.Length, patchJson.Length, options.ArrayMergeStrategy);
+
+                using var originalDoc = JsonDocument.Parse(originalJson);
+                using var patchDoc = JsonDocument.Parse(patchJson);
+
+                using var memStream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(memStream, new JsonWriterOptions
+                {
+                    Indented = options.PreserveFormatting && (IsIndented(originalJson) || IsIndented(patchJson)),
+                    SkipValidation = false,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+                MergeElements(originalDoc.RootElement, patchDoc.RootElement, writer, options);
+                writer.Flush();
+
+                string result = Encoding.UTF8.GetString(memStream.ToArray());
+
+                Logger.LogDebug("Successfully merged JSON documents into {ResultLength} chars",
+                    result.Length);
+
+                return result;
+            },
+            (ex, msg) =>
+            {
+                if (ex is ArgumentException argEx)
+                    return new JsonArgumentException($"Invalid argument in JSON merge: {argEx.Message}", argEx);
+
+                if (ex is JsonException jsonEx)
+                    return new JsonParsingException("Failed to merge JSON: Invalid JSON format", jsonEx);
+
+                return new JsonOperationException("Failed to merge JSON: " + msg, ex);
+            },
+            "Failed to merge JSON documents") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Merges multiple JSON strings in sequence, with later documents overriding earlier ones.
     /// This is useful for layered configurations or applying multiple patches in order.
@@ -186,52 +190,52 @@ public static class JsonMerger
     public static string MergeMultiple(this string baseJson, string[] jsonPatches, MergeOptions? options = null)
     {
         using var performance = new PerformanceTracker(Logger, nameof(MergeMultiple));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(baseJson, nameof(baseJson));
         ExceptionHelpers.ThrowIfNull(jsonPatches, nameof(jsonPatches));
-        
+
         if (jsonPatches.Length == 0)
         {
             Logger.LogDebug("No patches to merge, returning original JSON");
             return baseJson;
         }
-        
-        options ??= new MergeOptions();
-        
-        return ExceptionHelpers.SafeExecute(() => 
-        {
-            Logger.LogDebug("Starting multiple JSON merge with {BaseLength} base chars and {PatchCount} patches",
-                baseJson.Length, jsonPatches.Length);
-            
-            string current = baseJson;
-            
-            foreach (string patch in jsonPatches)
-            {
-                if (string.IsNullOrWhiteSpace(patch))
-                {
-                    Logger.LogWarning("Empty patch detected during multiple merge operation - skipping");
-                    continue;
-                }
-                
-                current = Merge(current, patch, options);
-            }
-            
-            Logger.LogDebug("Successfully merged {PatchCount} JSON documents into {ResultLength} chars",
-                jsonPatches.Length, current.Length);
-                
-            return current;
-        }, 
-        (ex, msg) => 
-        {
-            if (ex is JsonParsingException jsonParsingEx)
-                return jsonParsingEx;  // Let specific parsing exceptions bubble up unchanged
 
-            return new JsonOperationException("Failed to merge multiple JSON documents: " + msg, ex);
-        }, 
-        "Failed to merge multiple JSON documents") ?? baseJson;
+        options ??= new MergeOptions();
+
+        return ExceptionHelpers.SafeExecute(() =>
+            {
+                Logger.LogDebug("Starting multiple JSON merge with {BaseLength} base chars and {PatchCount} patches",
+                    baseJson.Length, jsonPatches.Length);
+
+                string current = baseJson;
+
+                foreach (string patch in jsonPatches)
+                {
+                    if (string.IsNullOrWhiteSpace(patch))
+                    {
+                        Logger.LogWarning("Empty patch detected during multiple merge operation - skipping");
+                        continue;
+                    }
+
+                    current = Merge(current, patch, options);
+                }
+
+                Logger.LogDebug("Successfully merged {PatchCount} JSON documents into {ResultLength} chars",
+                    jsonPatches.Length, current.Length);
+
+                return current;
+            },
+            (ex, msg) =>
+            {
+                if (ex is JsonParsingException jsonParsingEx)
+                    return jsonParsingEx; // Let specific parsing exceptions bubble up unchanged
+
+                return new JsonOperationException("Failed to merge multiple JSON documents: " + msg, ex);
+            },
+            "Failed to merge multiple JSON documents") ?? baseJson;
     }
-    
+
     /// <summary>
     /// Merges a JSON object with multiple patches in parallel and combines the results.
     /// Each patch is applied to the original independently, then the results are merged.
@@ -264,74 +268,80 @@ public static class JsonMerger
     public static string MergeParallel(this string baseJson, string[] jsonPatches, MergeOptions? options = null)
     {
         using var performance = new PerformanceTracker(Logger, nameof(MergeParallel));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(baseJson, nameof(baseJson));
         ExceptionHelpers.ThrowIfNull(jsonPatches, nameof(jsonPatches));
-        
+
         if (jsonPatches.Length == 0)
         {
             Logger.LogDebug("No patches to merge, returning original JSON");
             return baseJson;
         }
-        
+
         options ??= new MergeOptions();
-        
-        return ExceptionHelpers.SafeExecute(() => 
-        {
-            Logger.LogDebug("Starting parallel JSON merge with {BaseLength} base chars and {PatchCount} patches",
-                baseJson.Length, jsonPatches.Length);
-            
-            // Apply each patch to the base independently
-            var mergedPatches = new List<string>();
-            foreach (string patch in jsonPatches)
+
+        return ExceptionHelpers.SafeExecute(() =>
             {
-                if (string.IsNullOrWhiteSpace(patch))
+                Logger.LogDebug("Starting parallel JSON merge with {BaseLength} base chars and {PatchCount} patches",
+                    baseJson.Length, jsonPatches.Length);
+
+                // Apply each patch to the base independently
+                var mergedPatches = new List<string>();
+                foreach (string patch in jsonPatches)
                 {
-                    Logger.LogWarning("Empty patch detected during parallel merge operation - skipping");
-                    continue;
+                    if (string.IsNullOrWhiteSpace(patch))
+                    {
+                        Logger.LogWarning("Empty patch detected during parallel merge operation - skipping");
+                        continue;
+                    }
+
+                    string mergedPatch = Merge(baseJson, patch, options);
+                    mergedPatches.Add(mergedPatch);
                 }
-                
-                string mergedPatch = Merge(baseJson, patch, options);
-                mergedPatches.Add(mergedPatch);
-            }
-            
-            if (mergedPatches.Count == 0)
+
+                if (mergedPatches.Count == 0)
+                {
+                    Logger.LogDebug("No valid patches to merge, returning original JSON");
+                    return baseJson;
+                }
+
+                if (mergedPatches.Count == 1)
+                {
+                    Logger.LogDebug("Only one valid patch, returning directly merged result");
+                    return mergedPatches[0];
+                }
+
+                // Now merge all the patches together
+                string result = mergedPatches[0];
+                for (int i = 1; i < mergedPatches.Count; i++)
+                {
+                    result = Merge(result, mergedPatches[i], options);
+                }
+
+                Logger.LogDebug("Successfully merged {PatchCount} JSON documents in parallel into {ResultLength} chars",
+                    jsonPatches.Length, result.Length);
+
+                return result;
+            },
+            (ex, msg) =>
             {
-                Logger.LogDebug("No valid patches to merge, returning original JSON");
-                return baseJson;
-            }
-            
-            if (mergedPatches.Count == 1)
-            {
-                Logger.LogDebug("Only one valid patch, returning directly merged result");
-                return mergedPatches[0];
-            }
-            
-            // Now merge all the patches together
-            string result = mergedPatches[0];
-            for (int i = 1; i < mergedPatches.Count; i++)
-            {
-                result = Merge(result, mergedPatches[i], options);
-            }
-            
-            Logger.LogDebug("Successfully merged {PatchCount} JSON documents in parallel into {ResultLength} chars",
-                jsonPatches.Length, result.Length);
-                
-            return result;
-        }, 
-        (ex, msg) => 
-        {
-            if (ex is JsonParsingException jsonParsingEx)
-                return jsonParsingEx;
-                
-            return new JsonOperationException("Failed to merge JSON documents in parallel: " + msg, ex);
-        }, 
-        "Failed to merge JSON documents in parallel") ?? baseJson;
+                if (ex is JsonParsingException jsonParsingEx)
+                    return jsonParsingEx;
+
+                return new JsonOperationException("Failed to merge JSON documents in parallel: " + msg, ex);
+            },
+            "Failed to merge JSON documents in parallel") ?? baseJson;
     }
 
     /// <summary>
     /// Attempts to merge two JSON strings without throwing exceptions.
+    /// 
+    /// <para>
+    /// This method provides a safe way to merge JSON documents when error handling is
+    /// preferred over exceptions. If the merge fails for any reason, the original JSON
+    /// is returned and success is set to false.
+    /// </para>
     /// 
     /// <example>
     /// <code>
@@ -342,6 +352,7 @@ public static class JsonMerger
     /// if (JsonMerger.TryMerge(original, patch, out string result))
     /// {
     ///     Console.WriteLine($"Successfully merged: {result}");
+    ///     // Output: {"name":"John","age":30}
     /// }
     /// else
     /// {
@@ -359,14 +370,15 @@ public static class JsonMerger
     {
         if (string.IsNullOrWhiteSpace(originalJson) || string.IsNullOrWhiteSpace(patchJson))
         {
-            result = originalJson;
+            Logger.LogDebug("Cannot merge with null or empty JSON strings");
+            result = originalJson ?? string.Empty;
             return false;
         }
-        
+    
         try
         {
             result = Merge(originalJson, patchJson, options);
-            return result != originalJson;
+            return true;
         }
         catch (Exception ex)
         {
@@ -375,7 +387,7 @@ public static class JsonMerger
             return false;
         }
     }
-    
+
     /// <summary>
     /// Attempts to merge multiple JSON strings without throwing exceptions.
     /// </summary>
@@ -384,14 +396,15 @@ public static class JsonMerger
     /// <param name="result">When successful, contains the merged JSON; otherwise, the base JSON.</param>
     /// <param name="options">Optional merge options; if null, defaults are used.</param>
     /// <returns>True if the merge was successful; otherwise, false.</returns>
-    public static bool TryMergeMultiple(this string baseJson, string[] jsonPatches, out string result, MergeOptions? options = null)
+    public static bool TryMergeMultiple(this string baseJson, string[] jsonPatches, out string result,
+        MergeOptions? options = null)
     {
         if (string.IsNullOrWhiteSpace(baseJson) || jsonPatches.Any() == false || jsonPatches.Length == 0)
         {
             result = baseJson;
             return false;
         }
-        
+
         try
         {
             result = MergeMultiple(baseJson, jsonPatches, options);
@@ -404,7 +417,7 @@ public static class JsonMerger
             return false;
         }
     }
-    
+
     /// <summary>
     /// Recursively merges two JsonElements, writing the result to a Utf8JsonWriter.
     /// </summary>
@@ -412,143 +425,168 @@ public static class JsonMerger
     /// <param name="patch">The patch JsonElement.</param>
     /// <param name="writer">The writer to output the merged result.</param>
     /// <param name="options">The merge options to use.</param>
+    /// <exception cref="JsonOperationException">Thrown when the merge operation fails.</exception>
     private static void MergeElements(JsonElement source, JsonElement patch, Utf8JsonWriter writer,
         MergeOptions options)
     {
-        try
-        {
-            // If patch is null or undefined and source isn't, just use source
-            if ((patch.ValueKind == JsonValueKind.Null || patch.ValueKind == JsonValueKind.Undefined) && 
-                source.ValueKind != JsonValueKind.Null && source.ValueKind != JsonValueKind.Undefined &&
-                !options.NullOverridesValue)
+        ExceptionHelpers.SafeExecute(() =>
             {
-                source.WriteTo(writer);
-                return;
-            }
-
-            // If value kinds don't match, and we're not merging an object with anything
-            if (source.ValueKind != patch.ValueKind && 
-                !(source.ValueKind == JsonValueKind.Object && patch.ValueKind != JsonValueKind.Null))
-            {
-                // For mismatched types, use the patch value
-                patch.WriteTo(writer);
-                return;
-            }
-
-            switch (source.ValueKind)
-            {
-                case JsonValueKind.Object:
-                    writer.WriteStartObject();
-
-                    // Write properties from source; override if present in patch.
-                    foreach (var prop in source.EnumerateObject())
+                try
+                {
+                    // If patch is null or undefined and source isn't, just use source
+                    if ((patch.ValueKind == JsonValueKind.Null || patch.ValueKind == JsonValueKind.Undefined) &&
+                        source.ValueKind != JsonValueKind.Null && source.ValueKind != JsonValueKind.Undefined &&
+                        !options.NullOverridesValue)
                     {
-                        if (patch.TryGetProperty(prop.Name, out JsonElement patchValue))
-                        {
-                            writer.WritePropertyName(prop.Name);
-                            
-                            // Special handling for null values based on options
-                            if (patchValue.ValueKind == JsonValueKind.Null && !options.NullOverridesValue)
+                        source.WriteTo(writer);
+                        return;
+                    }
+
+                    // If value kinds don't match, and we're not merging an object with anything
+                    if (source.ValueKind != patch.ValueKind &&
+                        !(source.ValueKind == JsonValueKind.Object && patch.ValueKind != JsonValueKind.Null))
+                    {
+                        // For mismatched types, use the patch value
+                        patch.WriteTo(writer);
+                        return;
+                    }
+
+                    switch (source.ValueKind)
+                    {
+                        case JsonValueKind.Object:
+                            writer.WriteStartObject();
+
+                            // Write properties from source; override if present in patch.
+                            foreach (var prop in source.EnumerateObject())
                             {
-                                prop.Value.WriteTo(writer);
+                                if (patch.TryGetProperty(prop.Name, out JsonElement patchValue))
+                                {
+                                    writer.WritePropertyName(prop.Name);
+
+                                    // Special handling for null values based on options
+                                    if (patchValue.ValueKind == JsonValueKind.Null && !options.NullOverridesValue)
+                                    {
+                                        prop.Value.WriteTo(writer);
+                                    }
+                                    else
+                                    {
+                                        MergeElements(prop.Value, patchValue, writer, options);
+                                    }
+                                }
+                                else if (!options.RemoveUnmatchedProperties)
+                                {
+                                    prop.WriteTo(writer);
+                                }
+                            }
+
+                            // Write properties only present in patch.
+                            foreach (var prop in patch.EnumerateObject())
+                            {
+                                if (!source.TryGetProperty(prop.Name, out _))
+                                {
+                                    prop.WriteTo(writer);
+                                }
+                            }
+
+                            writer.WriteEndObject();
+                            break;
+
+                        case JsonValueKind.Array:
+                            if (patch.ValueKind == JsonValueKind.Array)
+                            {
+                                HandleArrayMerge(source, patch, writer, options);
                             }
                             else
                             {
-                                MergeElements(prop.Value, patchValue, writer, options);
+                                // Unexpected type in patch for an array - use patch
+                                patch.WriteTo(writer);
                             }
-                        }
-                        else if (!options.RemoveUnmatchedProperties)
-                        {
-                            prop.WriteTo(writer);
-                        }
-                    }
 
-                    // Write properties only present in patch.
-                    foreach (var prop in patch.EnumerateObject())
-                    {
-                        if (!source.TryGetProperty(prop.Name, out _))
-                        {
-                            prop.WriteTo(writer);
-                        }
-                    }
+                            break;
 
-                    writer.WriteEndObject();
-                    break;
-
-                case JsonValueKind.Array:
-                    if (patch.ValueKind == JsonValueKind.Array)
-                    {
-                        HandleArrayMerge(source, patch, writer, options);
+                        default:
+                            // For primitives, prefer the patch value.
+                            patch.WriteTo(writer);
+                            break;
                     }
-                    else
-                    {
-                        // Unexpected type in patch for an array - use patch
-                        patch.WriteTo(writer);
-                    }
-                    break;
-
-                default:
-                    // For primitives, prefer the patch value.
-                    patch.WriteTo(writer);
-                    break;
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error merging JSON elements of types {SourceType} and {PatchType}", 
-                source.ValueKind, patch.ValueKind);
-            throw;
-        }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error merging JSON elements of types {SourceType} and {PatchType}",
+                        source.ValueKind, patch.ValueKind);
+                    throw;
+                }
+            },
+            (ex, msg) => new JsonOperationException($"Failed to merge elements: {msg}", ex),
+            $"Error merging elements of types {source.ValueKind} and {patch.ValueKind}");
     }
-    
+
     /// <summary>
     /// Handles array merging based on the specified strategy.
     /// </summary>
-    private static void HandleArrayMerge(JsonElement sourceArray, JsonElement patchArray, Utf8JsonWriter writer, MergeOptions options)
+    /// <param name="sourceArray">The source array.</param>
+    /// <param name="patchArray">The patch array.</param>
+    /// <param name="writer">The JSON writer to write the result to.</param>
+    /// <param name="options">Merge options containing the array merge strategy.</param>
+    /// <exception cref="JsonOperationException">Thrown when array merging fails.</exception>
+    private static void HandleArrayMerge(JsonElement sourceArray, JsonElement patchArray, Utf8JsonWriter writer,
+        MergeOptions options)
     {
-        switch (options.ArrayMergeStrategy)
-        {
-            case ArrayMergeStrategy.Replace:
-                // If replacing, simply write the patch array
-                patchArray.WriteTo(writer);
-                break;
-                
-            case ArrayMergeStrategy.Merge:
-                // Merge arrays item by item if they're the same length
-                int sourceCount = GetArrayLength(sourceArray);
-                int patchCount = GetArrayLength(patchArray);
-                
-                writer.WriteStartArray();
-                
-                if (sourceCount == patchCount && options.EnableDeepArrayMerge)
+        ExceptionHelpers.SafeExecute(() =>
+            {
+                switch (options.ArrayMergeStrategy)
                 {
-                    // Deep merge each item
-                    using var sourceEnum = sourceArray.EnumerateArray().GetEnumerator();
-                    using var patchEnum = patchArray.EnumerateArray().GetEnumerator();
-                    
-                    while (sourceEnum.MoveNext() && patchEnum.MoveNext())
-                    {
-                        MergeElements(sourceEnum.Current, patchEnum.Current, writer, options);
-                    }
+                    case ArrayMergeStrategy.Replace:
+                        // If replacing, simply write the patch array
+                        Logger.LogTrace("Using Replace strategy for array merge");
+                        patchArray.WriteTo(writer);
+                        break;
+
+                    case ArrayMergeStrategy.Merge:
+                        // Merge arrays item by item if they're the same length
+                        int sourceCount = GetArrayLength(sourceArray);
+                        int patchCount = GetArrayLength(patchArray);
+
+                        Logger.LogTrace("Using Merge strategy for arrays of length {SourceCount} and {PatchCount}",
+                            sourceCount, patchCount);
+
+                        writer.WriteStartArray();
+
+                        if (sourceCount == patchCount && options.EnableDeepArrayMerge)
+                        {
+                            // Deep merge each item
+                            Logger.LogTrace("Performing deep array merge for equal-length arrays");
+                            using var sourceEnum = sourceArray.EnumerateArray().GetEnumerator();
+                            using var patchEnum = patchArray.EnumerateArray().GetEnumerator();
+
+                            while (sourceEnum.MoveNext() && patchEnum.MoveNext())
+                            {
+                                MergeElements(sourceEnum.Current, patchEnum.Current, writer, options);
+                            }
+                        }
+                        else
+                        {
+                            // In all other cases, fall back to concatenation
+                            Logger.LogTrace("Falling back to concatenation for arrays of different lengths");
+                            ConcatenateArrays(sourceArray, patchArray, writer);
+                        }
+
+                        writer.WriteEndArray();
+                        break;
+
+                    case ArrayMergeStrategy.Concat:
+                    default:
+                        Logger.LogTrace("Using Concat strategy for array merge");
+                        writer.WriteStartArray();
+                        ConcatenateArrays(sourceArray, patchArray, writer);
+                        writer.WriteEndArray();
+                        break;
                 }
-                else
-                {
-                    // In all other cases, fall back to concatenation
-                    ConcatenateArrays(sourceArray, patchArray, writer);
-                }
-                
-                writer.WriteEndArray();
-                break;
-                
-            case ArrayMergeStrategy.Concat:
-            default:
-                writer.WriteStartArray();
-                ConcatenateArrays(sourceArray, patchArray, writer);
-                writer.WriteEndArray();
-                break;
-        }
+            },
+            (ex, msg) => new JsonOperationException($"Failed to merge arrays: {msg}", ex),
+            "Error during array merge operation");
     }
-    
+
     /// <summary>
     /// Concatenates two JSON arrays by writing all elements to the specified writer.
     /// </summary>
@@ -564,7 +602,7 @@ public static class JsonMerger
             item.WriteTo(writer);
         }
     }
-    
+
     /// <summary>
     /// Gets the length of a JSON array.
     /// </summary>
@@ -575,9 +613,10 @@ public static class JsonMerger
         {
             count++;
         }
+
         return count;
     }
-    
+
     /// <summary>
     /// Determines if a JSON string is formatted with indentation.
     /// </summary>
@@ -585,11 +624,11 @@ public static class JsonMerger
     {
         if (string.IsNullOrWhiteSpace(json))
             return false;
-            
+
         // Look for a newline followed by whitespace, which indicates indentation
         return json.Contains("\n ") || json.Contains("\n\t") || json.Contains("\r\n ");
     }
-    
+
     /// <summary>
     /// Creates a deep clone of a JsonElement, optionally applying property filters.
     /// This can be used to selectively clone parts of a JSON document before merging.
@@ -619,23 +658,23 @@ public static class JsonMerger
     public static string CloneWithFilter(JsonElement element, string[]? includeProperties = null, bool indented = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(CloneWithFilter));
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
             {
                 var options = new JsonWriterOptions
                 {
                     Indented = indented,
                     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
-            
+
                 using var stream = new MemoryStream();
                 using var writer = new Utf8JsonWriter(stream, options);
-            
+
                 if (element.ValueKind == JsonValueKind.Object && includeProperties != null)
                 {
                     // Selective cloning of object properties
                     writer.WriteStartObject();
-                
+
                     var propertySet = new HashSet<string>(includeProperties, StringComparer.Ordinal);
                     foreach (var property in element.EnumerateObject())
                     {
@@ -644,7 +683,7 @@ public static class JsonMerger
                             property.WriteTo(writer);
                         }
                     }
-                
+
                     writer.WriteEndObject();
                 }
                 else
@@ -652,12 +691,12 @@ public static class JsonMerger
                     // Full clone
                     element.WriteTo(writer);
                 }
-            
+
                 writer.Flush();
-            
+
                 string result = Encoding.UTF8.GetString(stream.ToArray());
                 return result;
-            }, 
+            },
             (ex, msg) => new JsonOperationException($"Failed to clone JsonElement with filter: {msg}", ex),
             "Failed to clone JsonElement with filter") ?? string.Empty;
     }
