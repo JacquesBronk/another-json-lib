@@ -310,36 +310,7 @@ public static class AdvancedArrayDiffer
 
     private static bool JsonElementsAreEqual(JsonElement a, JsonElement b)
     {
-        return ExceptionHelpers.SafeExecute(() =>
-            {
-                // Special cases for null or different kinds
-                if (a.ValueKind != b.ValueKind)
-                    return false;
-
-                // Handle different JSON value types
-                switch (a.ValueKind)
-                {
-                    case JsonValueKind.String:
-                        return a.GetString() == b.GetString();
-                    case JsonValueKind.Number:
-                        // For numeric comparison, convert to decimal for accurate comparison
-                        // This handles differences in formatting like 1.0 vs 1
-                        if (a.TryGetDecimal(out decimal aDecimal) && b.TryGetDecimal(out decimal bDecimal))
-                            return aDecimal == bDecimal;
-                        // Fallback to raw text if decimal conversion fails
-                        return a.GetRawText() == b.GetRawText();
-                    case JsonValueKind.True:
-                    case JsonValueKind.False:
-                    case JsonValueKind.Null:
-                        return true; // Both have the same ValueKind, so they're equal
-                    case JsonValueKind.Object:
-                        return CompareJsonObjects(a, b);
-                    case JsonValueKind.Array:
-                        return CompareJsonArrays(a, b);
-                    default:
-                        return false;
-                }
-            },
+        return ExceptionHelpers.SafeExecute(() => JsonElementUtils.DeepEquals(a, b),
             (ex, msg) => new JsonOperationException($"Error comparing JSON elements: {msg}", ex),
             "Failed to compare JSON elements");
     }

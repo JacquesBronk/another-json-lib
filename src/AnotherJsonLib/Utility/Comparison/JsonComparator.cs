@@ -77,12 +77,10 @@ public static class JsonComparator
     {
         ExceptionHelpers.ThrowIfNull(json1, nameof(json1));
         ExceptionHelpers.ThrowIfNull(json2, nameof(json2));
-
         Logger.LogTrace("Comparing JSON strings (ignoreCase: {IgnoreCase}, ignoreWhitespace: {IgnoreWhitespace})",
             ignoreCase, ignoreWhitespace);
         using var performance = new PerformanceTracker(Logger, nameof(AreEqual));
-        return ExceptionHelpers.SafeExecuteWithDefault(
-            () =>
+        return ExceptionHelpers.SafeExecute(() =>
             {
                 var jsonReader1 = new Utf8JsonReader(ToUtf8Bytes(json1));
                 var jsonReader2 = new Utf8JsonReader(ToUtf8Bytes(json2));
@@ -176,9 +174,13 @@ public static class JsonComparator
 
                 return result;
             },
-            false,
-            "Error comparing JSON strings"
-        );
+            (ex, msg) =>
+            {
+                if (ex is JsonException)
+                    return new JsonParsingException("Failed to compare JSON strings: invalid JSON format", ex);
+                return new JsonOperationException($"Failed to compare JSON strings: {msg}", ex);
+            },
+            "Error comparing JSON strings");
     }
 
     /// <summary>
@@ -194,10 +196,9 @@ public static class JsonComparator
     {
         ExceptionHelpers.ThrowIfNull(json1, nameof(json1));
         ExceptionHelpers.ThrowIfNull(json2, nameof(json2));
-
         Logger.LogTrace("Comparing JSON strings semantically (ignoreCase: {IgnoreCase})", ignoreCase);
         using var performance = new PerformanceTracker(Logger, nameof(AreSemanticEqual));
-        return ExceptionHelpers.SafeExecuteWithDefault(() =>
+        return ExceptionHelpers.SafeExecute(() =>
             {
                 // Use the JsonCanonicalizer to create comparable versions
                 string canonical1 = JsonCanonicalizer.Canonicalize(json1);
@@ -215,9 +216,13 @@ public static class JsonComparator
                 // Otherwise, the canonicalized strings should be directly comparable
                 return canonical1 == canonical2;
             },
-            false,
-            "Error comparing JSON strings semantically"
-        );
+            (ex, msg) =>
+            {
+                if (ex is JsonException)
+                    return new JsonParsingException("Failed to compare JSON strings: invalid JSON format", ex);
+                return new JsonOperationException($"Failed to compare JSON strings: {msg}", ex);
+            },
+            "Error comparing JSON strings semantically");
     }
 
     /// <summary>
@@ -229,6 +234,7 @@ public static class JsonComparator
         {
             return false;
         }
+
         switch (element1.ValueKind)
         {
             case JsonValueKind.Object:

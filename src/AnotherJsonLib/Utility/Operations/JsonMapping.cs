@@ -12,7 +12,7 @@ namespace AnotherJsonLib.Utility.Operations;
 public static class JsonMapping
 {
     private static readonly ILogger Logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonMapping));
-    
+
     /// <summary>
     /// Default options for JSON serialization in mapping operations.
     /// </summary>
@@ -38,30 +38,30 @@ public static class JsonMapping
     public static string MapProperties(this string json, Dictionary<string, string> mapping)
     {
         using var performance = new PerformanceTracker(Logger, nameof(MapProperties));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNull(mapping, nameof(mapping));
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
         {
-            Logger.LogDebug("Starting property mapping on JSON string (length: {Length}) with {MappingCount} mappings", 
+            Logger.LogDebug("Starting property mapping on JSON string (length: {Length}) with {MappingCount} mappings",
                 json.Length, mapping.Count);
-            
+
             using var document = JsonDocument.Parse(json);
             object? mappedObject = MapPropertiesInternal(document.RootElement, mapping);
-            
+
             string result = JsonSerializer.Serialize(mappedObject, DefaultMappingOptions);
-            
-            Logger.LogDebug("Completed property mapping: transformed {OriginalLength} to {ResultLength} characters", 
+
+            Logger.LogDebug("Completed property mapping: transformed {OriginalLength} to {ResultLength} characters",
                 json.Length, result.Length);
-                
+
             return result;
-        }, (ex, msg) => 
+        }, (ex, msg) =>
         {
             if (ex is JsonException jsonEx)
                 return new JsonParsingException("Failed to map properties: Invalid JSON format", jsonEx);
-                
+
             return new JsonOperationException("Failed to map properties: " + msg, ex);
         }, "Failed to map JSON properties") ?? json;
     }
@@ -79,43 +79,35 @@ public static class JsonMapping
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
-                    var dict = new Dictionary<string, object?>();
+                    var resultObj = new Dictionary<string, object?>();
                     foreach (var property in element.EnumerateObject())
                     {
-                        string newKey = mapping.TryGetValue(property.Name, out var mapped) ? mapped : property.Name;
-                        dict[newKey] = MapPropertiesInternal(property.Value, mapping);
+                        string newKey = mapping.TryGetValue(property.Name, out var mappedName)
+                            ? mappedName
+                            : property.Name;
+                        // Recurse for nested values
+                        resultObj[newKey] = MapPropertiesInternal(property.Value, mapping);
                     }
-                    return dict;
-                    
+
+                    return resultObj;
                 case JsonValueKind.Array:
-                    var list = new List<object?>();
+                    var resultArray = new List<object?>();
                     foreach (var item in element.EnumerateArray())
                     {
-                        list.Add(MapPropertiesInternal(item, mapping));
+                        resultArray.Add(MapPropertiesInternal(item, mapping));
                     }
-                    return list;
-                    
+
+                    return resultArray;
                 case JsonValueKind.String:
-                    return element.GetString();
-                    
                 case JsonValueKind.Number:
-                    if (element.TryGetInt32(out int intValue))
-                        return intValue;
-                    if (element.TryGetInt64(out long longValue))
-                        return longValue;
-                    if (element.TryGetDouble(out double doubleValue))
-                        return doubleValue;
-                    return element.GetDecimal(); // Fallback to decimal for highest precision
-                    
                 case JsonValueKind.True:
                 case JsonValueKind.False:
-                    return element.GetBoolean();
-                    
                 case JsonValueKind.Null:
-                    return null;
-                    
+                    // Use centralized conversion for primitive values
+                    return JsonElementUtils.ConvertToObject(element);
                 default:
-                    Logger.LogWarning("Unexpected JsonValueKind: {ValueKind} during property mapping", element.ValueKind);
+                    Logger.LogWarning("Unexpected JsonValueKind: {ValueKind} during property mapping",
+                        element.ValueKind);
                     return element.ToString();
             }
         }
@@ -125,7 +117,8 @@ public static class JsonMapping
             throw;
         }
     }
-    
+
+
     /// <summary>
     /// Renames object properties in a JSON document according to a mapping dictionary,
     /// preserving indentation settings from the original JSON.
@@ -140,41 +133,43 @@ public static class JsonMapping
     public static string MapProperties(this string json, Dictionary<string, string> mapping, bool preserveFormatting)
     {
         using var performance = new PerformanceTracker(Logger, nameof(MapProperties) + "WithFormatting");
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNull(mapping, nameof(mapping));
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
         {
-            Logger.LogDebug("Starting property mapping on JSON string (length: {Length}) with {MappingCount} mappings, preserveFormatting: {PreserveFormatting}", 
+            Logger.LogDebug(
+                "Starting property mapping on JSON string (length: {Length}) with {MappingCount} mappings, preserveFormatting: {PreserveFormatting}",
                 json.Length, mapping.Count, preserveFormatting);
-            
+
             using var document = JsonDocument.Parse(json);
             bool isIndented = JsonDocumentHelpers.IsIndented(json);
-            
+
             var options = new JsonSerializerOptions
             {
                 WriteIndented = preserveFormatting && isIndented,
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            
+
             object? mappedObject = MapPropertiesInternal(document.RootElement, mapping);
             string result = JsonSerializer.Serialize(mappedObject, options);
-            
-            Logger.LogDebug("Completed property mapping with formatting preservation: transformed {OriginalLength} to {ResultLength} characters", 
+
+            Logger.LogDebug(
+                "Completed property mapping with formatting preservation: transformed {OriginalLength} to {ResultLength} characters",
                 json.Length, result.Length);
-                
+
             return result;
-        }, (ex, msg) => 
+        }, (ex, msg) =>
         {
             if (ex is JsonException jsonEx)
                 return new JsonParsingException("Failed to map properties: Invalid JSON format", jsonEx);
-                
+
             return new JsonOperationException("Failed to map properties: " + msg, ex);
         }, "Failed to map JSON properties with formatting preservation") ?? json;
     }
-    
+
     /// <summary>
     /// Attempts to rename object properties in a JSON document according to a mapping dictionary.
     /// </summary>
@@ -189,16 +184,16 @@ public static class JsonMapping
             result = null;
             return false;
         }
-        
+
         result = ExceptionHelpers.SafeExecuteWithDefault(
             () => MapProperties(json, mapping),
             null,
             "Failed to map JSON properties"
         );
-        
+
         return result != null;
     }
-    
+
     /// <summary>
     /// Filters object properties in a JSON document, keeping only those specified in the include list.
     /// </summary>
@@ -210,36 +205,37 @@ public static class JsonMapping
     public static string FilterProperties(this string json, IEnumerable<string> propertiesToInclude)
     {
         using var performance = new PerformanceTracker(Logger, nameof(FilterProperties));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNull(propertiesToInclude, nameof(propertiesToInclude));
-        
+
         var includeSet = new HashSet<string>(propertiesToInclude, StringComparer.Ordinal);
-        
-        return ExceptionHelpers.SafeExecute(() => 
+
+        return ExceptionHelpers.SafeExecute(() =>
         {
-            Logger.LogDebug("Starting property filtering on JSON string (length: {Length}) with {PropertyCount} properties to include", 
+            Logger.LogDebug(
+                "Starting property filtering on JSON string (length: {Length}) with {PropertyCount} properties to include",
                 json.Length, includeSet.Count);
-            
+
             using var document = JsonDocument.Parse(json);
             object? filteredObject = FilterPropertiesInternal(document.RootElement, includeSet);
-            
+
             string result = JsonSerializer.Serialize(filteredObject, DefaultMappingOptions);
-            
-            Logger.LogDebug("Completed property filtering: transformed {OriginalLength} to {ResultLength} characters", 
+
+            Logger.LogDebug("Completed property filtering: transformed {OriginalLength} to {ResultLength} characters",
                 json.Length, result.Length);
-                
+
             return result;
-        }, (ex, msg) => 
+        }, (ex, msg) =>
         {
             if (ex is JsonException jsonEx)
                 return new JsonParsingException("Failed to filter properties: Invalid JSON format", jsonEx);
-                
+
             return new JsonOperationException("Failed to filter properties: " + msg, ex);
         }, "Failed to filter JSON properties") ?? json;
     }
-    
+
     /// <summary>
     /// Internal method to filter properties in a JsonElement.
     /// </summary>
@@ -255,19 +251,22 @@ public static class JsonMapping
                     {
                         if (propertiesToInclude.Contains(property.Name))
                         {
-                            dict[property.Name] = MapPropertiesInternal(property.Value, new Dictionary<string, string>());
+                            dict[property.Name] =
+                                MapPropertiesInternal(property.Value, new Dictionary<string, string>());
                         }
                     }
+
                     return dict;
-                    
+
                 case JsonValueKind.Array:
                     var list = new List<object?>();
                     foreach (var item in element.EnumerateArray())
                     {
                         list.Add(FilterPropertiesInternal(item, propertiesToInclude));
                     }
+
                     return list;
-                    
+
                 // For all other value types, use the same handling as MapPropertiesInternal
                 default:
                     return MapPropertiesInternal(element, new Dictionary<string, string>());

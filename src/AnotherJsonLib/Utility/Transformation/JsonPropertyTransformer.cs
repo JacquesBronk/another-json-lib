@@ -17,7 +17,7 @@ namespace AnotherJsonLib.Utility.Transformation;
 /// - Anonymizing or obfuscating data
 /// - Implementing custom transformation rules
 /// </remarks>
-public static class JsonPropertyTransformer
+public static partial class JsonPropertyTransformer
 {
     private static readonly ILogger Logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonPropertyTransformer));
     
@@ -130,6 +130,9 @@ public static class JsonPropertyTransformer
                     foreach (var property in element.EnumerateObject())
                     {
                         string newKey = propertyTransform(property.Name);
+                        // If newKey is null or empty, skip adding this property.
+                        if (string.IsNullOrWhiteSpace(newKey))
+                            continue;
                         dict[newKey] = TransformPropertyNames(property.Value, propertyTransform);
                     }
                     return dict;

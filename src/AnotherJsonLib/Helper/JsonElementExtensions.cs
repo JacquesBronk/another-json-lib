@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using AnotherJsonLib.Exceptions;
+using AnotherJsonLib.Utility;
 using Microsoft.Extensions.Logging;
 
 namespace AnotherJsonLib.Helper;
@@ -54,65 +55,18 @@ public static class JsonElementExtensions
     public static object? CloneValue(this JsonElement element)
     {
         using var performance = new PerformanceTracker(Logger, nameof(CloneValue));
-        
+
         return ExceptionHelpers.SafeExecute<object?>(() =>
-        {
-            Logger.LogTrace("Cloning JsonElement of type {ValueKind}", element.ValueKind);
-            
-            switch (element.ValueKind)
             {
-                case JsonValueKind.Null:
-                    return null;
-                    
-                case JsonValueKind.True:
-                case JsonValueKind.False:
-                    return element.GetBoolean();
-                    
-                case JsonValueKind.Number:
-                    string raw = element.GetRawText();
-                    if (raw.Contains('.') || raw.Contains('e') || raw.Contains('E'))
-                    {
-                        if (decimal.TryParse(raw, out decimal decValue))
-                            return decValue;
-                        else if (double.TryParse(raw, out double dblValue))
-                            return dblValue;
-                        else
-                            return raw;
-                    }
-                    else
-                    {
-                        if (long.TryParse(raw, out long longValue))
-                            return longValue;
-                        else if (decimal.TryParse(raw, out decimal decValue))
-                            return decValue;
-                        else
-                            return raw;
-                    }
-                    
-                case JsonValueKind.String:
-                    return element.GetString();
-                    
-                case JsonValueKind.Array:
-                    var list = new List<object?>();
-                    foreach (var item in element.EnumerateArray())
-                        list.Add(item.CloneValue());
-                    return list;
-                    
-                case JsonValueKind.Object:
-                    var dict = new Dictionary<string, object?>();
-                    foreach (var prop in element.EnumerateObject())
-                        dict[prop.Name] = prop.Value.CloneValue();
-                    return dict;
-                    
-                default:
-                    Logger.LogWarning("Unexpected JsonValueKind: {ValueKind}", element.ValueKind);
-                    return element.ToString();
-            }
-        }, 
-        (ex, msg) => new JsonOperationException($"Failed to clone JsonElement of type {element.ValueKind}: {msg}", ex),
-        $"Error cloning JsonElement of type {element.ValueKind}");
+                Logger.LogTrace("Cloning JsonElement of type {ValueKind}", element.ValueKind);
+                // Delegate to JsonElementUtils for deep conversion/clone
+                return JsonElementUtils.ConvertToObject(element);
+            },
+            (ex, msg) =>
+                new JsonOperationException($"Failed to clone JsonElement of type {element.ValueKind}: {msg}", ex),
+            $"Error cloning JsonElement of type {element.ValueKind}");
     }
-    
+
     /// <summary>
     /// Attempts to clone a JsonElement to a native .NET object without throwing exceptions.
     /// </summary>
@@ -139,7 +93,7 @@ public static class JsonElementExtensions
             null,
             $"Failed to clone JsonElement of type {element.ValueKind}"
         );
-        
+
         return result != null || element.ValueKind == JsonValueKind.Null;
     }
 }

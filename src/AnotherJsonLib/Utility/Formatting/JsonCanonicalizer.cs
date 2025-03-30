@@ -117,58 +117,7 @@ public static class JsonCanonicalizer
 private static object? NormalizeElement(JsonElement element)
 {
     return ExceptionHelpers.SafeExecute<object>(
-        () => {
-            switch (element.ValueKind)
-            {
-                case JsonValueKind.Object:
-                    Logger.LogTrace("Normalizing JSON object");
-                    // Use a SortedDictionary to ensure keys are ordered.
-                    var dict = new SortedDictionary<string, object>(StringComparer.Ordinal);
-                    foreach (var property in element.EnumerateObject())
-                    {
-                        dict[property.Name] = NormalizeElement(property.Value) ?? string.Empty;
-                    }
-                    return dict;
-                    
-                case JsonValueKind.Array:
-                    Logger.LogTrace("Normalizing JSON array with {Count} elements", 
-                        element.GetArrayLength());
-                    var list = new List<object>();
-                    foreach (var item in element.EnumerateArray())
-                    {
-                        list.Add(NormalizeElement(item) ?? string.Empty);
-                    }
-                    return list;
-                    
-                case JsonValueKind.String:
-                    return element.GetString()!;
-                    
-                case JsonValueKind.Number:
-                    // Try to parse as a decimal for a normalized representation.
-                    if (element.TryGetDecimal(out decimal decValue))
-                    {
-                        return decValue;
-                    }
-                    
-                    // This should rarely happen, but log if it does
-                    Logger.LogDebug("Failed to parse number as decimal, using raw text: {RawText}", 
-                        element.GetRawText());
-                    // Fallback to raw text if parsing fails.
-                    return element.GetRawText();
-                    
-                case JsonValueKind.True:
-                case JsonValueKind.False:
-                    return element.GetBoolean();
-                    
-                case JsonValueKind.Null:
-                    return null!;
-                    
-                default:
-                    Logger.LogWarning("Encountered unexpected JSON value kind: {ValueKind}", 
-                        element.ValueKind);
-                    return element.ToString();
-            }
-        },
+        () => JsonElementUtils.Normalize(element),
         (ex, msg) => new JsonCanonicalizationException(
             $"Failed to normalize JSON element of type {element.ValueKind}: {msg}", ex),
         $"Error normalizing JSON element of type {element.ValueKind}"

@@ -116,7 +116,6 @@ public static class JsonDiffer
 
         return ExceptionHelpers.SafeExecute(() =>
             {
-                // Move validations inside SafeExecute
                 ExceptionHelpers.ThrowIfNullOrWhiteSpace(originalJson, nameof(originalJson));
                 ExceptionHelpers.ThrowIfNullOrWhiteSpace(newJson, nameof(newJson));
 
@@ -162,6 +161,71 @@ public static class JsonDiffer
                             string oldJson = JsonSerializer.Serialize(originalDict[kvp.Key]);
                             string newJsonString = JsonSerializer.Serialize(kvp.Value);
                             nestedDiff = ComputeDiff(oldJson, newJsonString);
+                        }
+                        // NEW CODE: Add handling for arrays
+                        else if (originalDict[kvp.Key].ValueKind == JsonValueKind.Array &&
+                                 kvp.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            nestedDiff = new JsonDiffResult();
+                            var originalArray = originalDict[kvp.Key].EnumerateArray().ToList();
+                            var newArray = kvp.Value.EnumerateArray().ToList();
+
+                            // Compare array elements
+                            for (int i = 0; i < Math.Max(originalArray.Count, newArray.Count); i++)
+                            {
+                                // Element exists in both arrays and can be compared
+                                if (i < originalArray.Count && i < newArray.Count)
+                                {
+                                    var origElement = originalArray[i];
+                                    var newElement = newArray[i];
+
+                                    if (!comparer.Equals(origElement, newElement))
+                                    {
+                                        // Element at position i was modified
+                                        var elemOldValue = comparer.ConvertToValueType(origElement) ??
+                                                           new JsonElement();
+                                        var elemNewValue = comparer.ConvertToValueType(newElement) ?? new JsonElement();
+
+                                        // Handle nested objects within array elements
+                                        JsonDiffResult? elemNestedDiff = null;
+                                        if (origElement.ValueKind == JsonValueKind.Object &&
+                                            newElement.ValueKind == JsonValueKind.Object)
+                                        {
+                                            string elemOldJson = JsonSerializer.Serialize(origElement);
+                                            string elemNewJson = JsonSerializer.Serialize(newElement);
+                                            elemNestedDiff = ComputeDiff(elemOldJson, elemNewJson);
+                                        }
+
+                                        nestedDiff.Modified[i.ToString()] = new DiffEntry
+                                        {
+                                            OldValue = elemOldValue,
+                                            NewValue = elemNewValue,
+                                            NestedDiff = elemNestedDiff ?? new JsonDiffResult()
+                                        };
+
+                                        Logger.LogTrace(
+                                            "Modified array element at index {Index} in property {Property}",
+                                            i, kvp.Key);
+                                    }
+                                }
+                                // Element exists only in original array (was removed)
+                                else if (i < originalArray.Count)
+                                {
+                                    var removedValue = comparer.ConvertToValueType(originalArray[i]) ??
+                                                       new JsonElement();
+                                    nestedDiff.Removed[i.ToString()] = removedValue;
+                                    Logger.LogTrace("Removed array element at index {Index} in property {Property}",
+                                        i, kvp.Key);
+                                }
+                                // Element exists only in new array (was added)
+                                else if (i < newArray.Count)
+                                {
+                                    var addedValue = comparer.ConvertToValueType(newArray[i]) ?? new JsonElement();
+                                    nestedDiff.Added[i.ToString()] = addedValue;
+                                    Logger.LogTrace("Added array element at index {Index} in property {Property}",
+                                        i, kvp.Key);
+                                }
+                            }
                         }
 
                         result.Modified[kvp.Key] = new DiffEntry

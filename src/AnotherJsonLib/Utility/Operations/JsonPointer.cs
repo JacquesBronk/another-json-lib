@@ -240,23 +240,21 @@ public static class JsonPointer
     public static string Create(params string[] segments)
     {
         ExceptionHelpers.ThrowIfNull(segments, nameof(segments));
-
         using var performance = new PerformanceTracker(Logger, nameof(Create));
-
         return ExceptionHelpers.SafeExecute(() =>
             {
+                // Escape each segment per RFC6901
                 var escapedSegments = segments.Select(segment =>
                 {
                     ExceptionHelpers.ThrowIfNull(segment, "pointer segment");
-                    // Escape special characters according to RFC6901
                     return segment.Replace("~", "~0").Replace("/", "~1");
                 });
-
                 return "/" + string.Join("/", escapedSegments);
             },
             (ex, msg) => new JsonPointerException($"Failed to create JSON pointer: {msg}", ex),
             "Failed to create JSON pointer") ?? string.Empty;
     }
+
 
     /// <summary>
     /// Appends a segment to an existing JSON Pointer string, properly escaping special characters.

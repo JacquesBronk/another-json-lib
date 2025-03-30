@@ -65,7 +65,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     /// A value of -1 means no limit.
     /// </summary>
     private int MaxHashDepth { get; }
-    
+
     /// <summary>
     /// Gets whether property name comparison should be case-sensitive.
     /// </summary>
@@ -107,12 +107,12 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     /// Thrown if epsilon is negative or maxHashDepth is less than -1.
     /// </exception>
     public JsonElementComparer(
-        double epsilon = DefaultEpsilon, 
+        double epsilon = DefaultEpsilon,
         int maxHashDepth = -1,
         bool caseSensitivePropertyNames = true)
     {
         using var performance = new PerformanceTracker(Logger, nameof(JsonElementComparer));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfFalse(epsilon >= 0, "Epsilon must be non-negative", nameof(epsilon));
         ExceptionHelpers.ThrowIfFalse(maxHashDepth >= -1,
@@ -123,7 +123,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         CaseSensitivePropertyNames = caseSensitivePropertyNames;
 
         Logger.LogTrace("JsonElementComparer created with epsilon={Epsilon}, maxHashDepth={MaxHashDepth}, " +
-            "caseSensitivePropertyNames={CaseSensitive}", 
+                        "caseSensitivePropertyNames={CaseSensitive}",
             Epsilon, MaxHashDepth, CaseSensitivePropertyNames);
     }
 
@@ -159,77 +159,9 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     public bool Equals(JsonElement x, JsonElement y)
     {
         using var performance = new PerformanceTracker(Logger, nameof(Equals));
-
-        return ExceptionHelpers.SafeExecuteWithDefault(() =>
-        {
-            // If both are undefined, consider them equal
-            if (x.ValueKind == JsonValueKind.Undefined && y.ValueKind == JsonValueKind.Undefined)
-                return true;
-
-            // If one is undefined but the other is not, or if they have different kinds
-            if (x.ValueKind != y.ValueKind)
-            {
-                Logger.LogTrace("Elements have different value kinds: {Kind1} vs {Kind2}", 
-                    x.ValueKind, y.ValueKind);
-                return false;
-            }
-
-            switch (x.ValueKind)
-            {
-                case JsonValueKind.Null:
-                    return true;
-
-                case JsonValueKind.String:
-                    string? str1 = x.GetString();
-                    string? str2 = y.GetString();
-                    bool stringsEqual = string.Equals(str1, str2);
-                    
-                    if (!stringsEqual)
-                    {
-                        Logger.LogTrace("String values differ: '{String1}' vs '{String2}'", str1, str2);
-                    }
-                    
-                    return stringsEqual;
-
-                case JsonValueKind.Number:
-                    // For numbers, use epsilon comparison for doubles
-                    double xValue = x.GetDouble();
-                    double yValue = y.GetDouble();
-                    
-                    // Handle special cases like NaN and Infinity consistently
-                    if (double.IsNaN(xValue) && double.IsNaN(yValue))
-                        return true;
-                    
-                    if (double.IsInfinity(xValue) || double.IsInfinity(yValue))
-                        return Math.Abs(xValue - yValue) < Epsilon;
-                    
-                    bool numbersEqual = Math.Abs(xValue - yValue) < Epsilon;
-                    
-                    if (!numbersEqual)
-                    {
-                        Logger.LogTrace("Number values differ beyond epsilon {Epsilon}: {Value1} vs {Value2}", 
-                            Epsilon, xValue, yValue);
-                    }
-                    
-                    return numbersEqual;
-
-                case JsonValueKind.True:
-                case JsonValueKind.False:
-                    return x.GetBoolean() == y.GetBoolean();
-
-                case JsonValueKind.Object:
-                    return CompareObjects(x, y);
-
-                case JsonValueKind.Array:
-                    return CompareArrays(x, y);
-
-                default:
-                    Logger.LogWarning("Unexpected JsonValueKind: {ValueKind}", x.ValueKind);
-                    return false;
-            }
-        },
-        false,
-        $"Error comparing JsonElements of types {x.ValueKind} and {y.ValueKind}");
+        return ExceptionHelpers.SafeExecute(() => JsonElementUtils.DeepEquals(x, y, Epsilon, CaseSensitivePropertyNames),
+            (ex, msg) => new JsonComparisonException($"Error comparing JSON elements: {msg}", ex),
+            $"Error comparing JsonElements of types {x.ValueKind} and {y.ValueKind}");
     }
 
     /// <summary>
@@ -243,10 +175,10 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         // Check property count first for quick inequality detection
         int xPropCount = 0;
         int yPropCount = 0;
-        
+
         foreach (var _ in x.EnumerateObject()) xPropCount++;
         foreach (var _ in y.EnumerateObject()) yPropCount++;
-        
+
         if (xPropCount != yPropCount)
         {
             Logger.LogTrace("Object property counts differ: {Count1} vs {Count2}", xPropCount, yPropCount);
@@ -257,27 +189,27 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         foreach (var xProp in x.EnumerateObject())
         {
             bool propertyFound = false;
-            
+
             foreach (var yProp in y.EnumerateObject())
             {
-                bool namesEqual = CaseSensitivePropertyNames 
+                bool namesEqual = CaseSensitivePropertyNames
                     ? xProp.Name == yProp.Name
                     : string.Equals(xProp.Name, yProp.Name, StringComparison.OrdinalIgnoreCase);
-                    
+
                 if (namesEqual)
                 {
                     propertyFound = true;
-                    
+
                     if (!Equals(xProp.Value, yProp.Value))
                     {
                         Logger.LogTrace("Property '{PropertyName}' values differ", xProp.Name);
                         return false;
                     }
-                    
+
                     break;
                 }
             }
-            
+
             if (!propertyFound)
             {
                 Logger.LogTrace("Property '{PropertyName}' not found in second object", xProp.Name);
@@ -299,10 +231,10 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         // Compare array lengths
         int xCount = 0;
         int yCount = 0;
-        
+
         foreach (var _ in x.EnumerateArray()) xCount++;
         foreach (var _ in y.EnumerateArray()) yCount++;
-        
+
         if (xCount != yCount)
         {
             Logger.LogTrace("Array lengths differ: {Length1} vs {Length2}", xCount, yCount);
@@ -312,7 +244,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         // Compare array elements in order
         using var xEnumerator = x.EnumerateArray();
         using var yEnumerator = y.EnumerateArray();
-        
+
         int index = 0;
         while (xEnumerator.MoveNext() && yEnumerator.MoveNext())
         {
@@ -321,7 +253,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                 Logger.LogTrace("Array elements at index {Index} differ", index);
                 return false;
             }
-            
+
             index++;
         }
 
@@ -362,16 +294,16 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     public int GetHashCode(JsonElement obj)
     {
         using var performance = new PerformanceTracker(Logger, nameof(GetHashCode));
-
-        return ExceptionHelpers.SafeExecuteWithDefault(() =>
-        {
-            var hash = new HashCode();
-            ComputeHashCode(obj, ref hash, 0);
-            return hash.ToHashCode();
-        },
-        0,
-        "Failed to compute hash code for JsonElement");
+        return ExceptionHelpers.SafeExecute(() =>
+            {
+                var hash = new HashCode();
+                ComputeHashCode(obj, ref hash, 0);
+                return hash.ToHashCode();
+            },
+            (ex, msg) => new JsonComparisonException($"Failed to compute hash code for JsonElement: {msg}", ex),
+            "Failed to compute hash code for JsonElement");
     }
+
 
     /// <summary>
     /// Recursively computes a hash code for the specified JsonElement.
@@ -403,7 +335,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                 case JsonValueKind.Number:
                     // For numbers, round to account for epsilon
                     double val = obj.GetDouble();
-                    
+
                     // Special handling for NaN and Infinity
                     if (double.IsNaN(val))
                     {
@@ -418,6 +350,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                         double rounded = Math.Round(val / Epsilon) * Epsilon;
                         hash.Add(rounded);
                     }
+
                     break;
 
                 case JsonValueKind.String:
@@ -432,8 +365,8 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                 case JsonValueKind.Object:
                     // For objects, sort properties by name for consistent hash
                     var props = obj.EnumerateObject()
-                        .OrderBy(p => p.Name, CaseSensitivePropertyNames 
-                            ? StringComparer.Ordinal 
+                        .OrderBy(p => p.Name, CaseSensitivePropertyNames
+                            ? StringComparer.Ordinal
                             : StringComparer.OrdinalIgnoreCase)
                         .ToArray();
 
@@ -444,10 +377,11 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                             hash.Add(prop.Name);
                         else
                             hash.Add(prop.Name.ToLowerInvariant());
-                            
+
                         // Add property value to hash
                         ComputeHashCode(prop.Value, ref hash, depth + 1);
                     }
+
                     break;
 
                 case JsonValueKind.Array:
@@ -458,6 +392,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                         hash.Add(index++); // Include index in hash
                         ComputeHashCode(item, ref hash, depth + 1);
                     }
+
                     break;
             }
         }
@@ -507,54 +442,12 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         using var performance = new PerformanceTracker(Logger, nameof(ConvertToValueType));
 
         return ExceptionHelpers.SafeExecuteWithDefault<object?>(
-            () =>
-            {
-                switch (jsonElement.ValueKind)
-                {
-                    case JsonValueKind.Null:
-                    case JsonValueKind.Undefined:
-                        return null;
-
-                    case JsonValueKind.Number:
-                        // Try to determine the most appropriate numeric type
-                        if (jsonElement.TryGetInt32(out int intValue))
-                            return intValue;
-                        if (jsonElement.TryGetInt64(out long longValue))
-                            return longValue;
-                        if (jsonElement.TryGetDecimal(out decimal decimalValue))
-                            return decimalValue;
-                        return jsonElement.GetDouble();
-
-                    case JsonValueKind.String:
-                        return jsonElement.GetString();
-
-                    case JsonValueKind.True:
-                    case JsonValueKind.False:
-                        return jsonElement.GetBoolean();
-
-                    case JsonValueKind.Object:
-                        var obj = new Dictionary<string, object?>();
-                        foreach (var property in jsonElement.EnumerateObject())
-                        {
-                            obj[property.Name] = ConvertToValueType(property.Value);
-                        }
-                        return obj;
-
-                    case JsonValueKind.Array:
-                        return jsonElement.EnumerateArray()
-                            .Select(ConvertToValueType)
-                            .ToList();
-
-                    default:
-                        Logger.LogWarning("Unknown JsonValueKind {ValueKind} encountered", jsonElement.ValueKind);
-                        return null;
-                }
-            },
+            () => JsonElementUtils.ConvertToObject(jsonElement),
             null,
             "Failed to convert JsonElement to value type"
         );
     }
-    
+
     /// <summary>
     /// Creates a case-insensitive JsonElementComparer.
     /// This is a convenience method for creating a comparer that ignores case in property name comparisons.
@@ -583,7 +476,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     {
         return new JsonElementComparer(epsilon, maxHashDepth, caseSensitivePropertyNames: false);
     }
-    
+
     /// <summary>
     /// Creates a JsonElementComparer with a specific numeric comparison precision.
     /// This is useful when you need to control exactly how close numeric values must be to be considered equal.
@@ -616,14 +509,14 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     /// <returns>A JsonElementComparer configured with the specified precision.</returns>
     /// <exception cref="JsonArgumentException">Thrown if epsilon is negative.</exception>
     public static JsonElementComparer WithPrecision(
-        double epsilon, 
-        bool caseSensitivePropertyNames = true, 
+        double epsilon,
+        bool caseSensitivePropertyNames = true,
         int maxHashDepth = -1)
     {
         ExceptionHelpers.ThrowIfFalse(epsilon >= 0, "Epsilon must be non-negative", nameof(epsilon));
         return new JsonElementComparer(epsilon, maxHashDepth, caseSensitivePropertyNames);
     }
-    
+
     /// <summary>
     /// Determines if two JsonElement instances represent semantically equal JSON values.
     /// This is a static convenience method that uses a default JsonElementComparer.
@@ -653,7 +546,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
         var defaultComparer = new JsonElementComparer();
         return defaultComparer.Equals(a, b);
     }
-    
+
     /// <summary>
     /// Creates a deep clone of a JsonElement as its corresponding .NET object graph.
     /// This is useful for extracting data from JsonElements into manipulable .NET objects.
