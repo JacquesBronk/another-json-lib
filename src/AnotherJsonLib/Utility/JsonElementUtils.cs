@@ -5,8 +5,13 @@ namespace AnotherJsonLib.Utility;
 public static class JsonElementUtils
 {
     /// <summary>
-    /// Converts a JsonElement to a native .NET object (string, number, bool, list, dict, or null).
+    /// Converts a JsonElement into a corresponding .NET object representation.
+    /// Supports conversion of JSON primitives, arrays, and objects, and allows optional sorting of properties in JSON objects.
     /// </summary>
+    /// <param name="element">The JsonElement to be converted to an object.</param>
+    /// <param name="sortProperties">A boolean value indicating whether properties in a JSON object should be sorted by their names. Defaults to false.</param>
+    /// <returns>The .NET object representation of the provided JsonElement, or null if the value kind is null or undefined.
+    /// Primitive values are converted to corresponding .NET types, arrays are converted to lists, and objects to a dictionary.</returns>
     public static object? ConvertToObject(JsonElement element, bool sortProperties = false)
     {
         // Handle simple JSON value kinds directly
