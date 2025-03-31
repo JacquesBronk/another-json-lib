@@ -55,7 +55,7 @@ jobs:
         working-directory: src  # Set the working directory to 'src'
        
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: AnotherJsonLibrary.${{ env.newVersion }}.nupkg
           path: .artifacts/*.nupkg
