@@ -29,7 +29,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.x  # Adjust to your project's .NET version
+          dotnet-version: 8.x  # Adjust to your project's .NET version
 
       - name: Restore dependencies
         run: dotnet restore AnotherJsonLib/AnotherJsonLib.csproj
