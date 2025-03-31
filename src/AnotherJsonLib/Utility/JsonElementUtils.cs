@@ -26,10 +26,14 @@ public static class JsonElementUtils
                     return intVal;
                 if (element.TryGetInt64(out long longVal))
                     return longVal;
-                if (element.TryGetDecimal(out decimal decVal))
-                    return decVal;
+                if (!element.TryGetDecimal(out decimal decVal)) 
+                    return element.GetDouble();
+                // If it has decimal places, return as double
+                if (decVal != Math.Truncate(decVal))
+                    return (double)decVal;
+                return decVal;
+
                 // Fallback to double for very large numbers
-                return element.GetDouble();
             case JsonValueKind.Object:
                 // Convert object to dictionary (optionally sorted)
                 var objDict = sortProperties
@@ -40,6 +44,7 @@ public static class JsonElementUtils
                     string key = prop.Name;
                     objDict[key] = ConvertToObject(prop.Value, sortProperties);
                 }
+
                 return objDict;
             case JsonValueKind.Array:
                 // Convert array to list
@@ -48,6 +53,7 @@ public static class JsonElementUtils
                 {
                     list.Add(ConvertToObject(item, sortProperties));
                 }
+
                 return list;
             default:
                 // Unexpected kind – return string representation
@@ -69,7 +75,7 @@ public static class JsonElementUtils
         switch (a.ValueKind)
         {
             case JsonValueKind.Null:
-                return true;  // both are null
+                return true; // both are null
             case JsonValueKind.True:
             case JsonValueKind.False:
                 return a.GetBoolean() == b.GetBoolean();
@@ -98,19 +104,20 @@ public static class JsonElementUtils
                 // Compare objects: check property counts and values
                 var aProps = a.EnumerateObject().ToList();
                 var bProps = b.EnumerateObject().ToList();
-                if (aProps.Count != bProps.Count) 
+                if (aProps.Count != bProps.Count)
                     return false;
                 foreach (JsonProperty aProp in aProps)
                 {
                     // Find matching property in b (respect case sensitivity setting)
-                    JsonProperty? bProp = caseSensitivePropertyNames 
-                        ? bProps.FirstOrDefault(p => p.NameEquals(aProp.Name)) 
+                    JsonProperty? bProp = caseSensitivePropertyNames
+                        ? bProps.FirstOrDefault(p => p.NameEquals(aProp.Name))
                         : bProps.FirstOrDefault(p => string.Equals(p.Name, aProp.Name, StringComparison.OrdinalIgnoreCase));
-                    if (bProp == null) 
+                    if (bProp == null)
                         return false;
                     if (!DeepEquals(aProp.Value, bProp.Value.Value, epsilon, caseSensitivePropertyNames))
                         return false;
                 }
+
                 return true;
             case JsonValueKind.Array:
                 // Compare arrays element by element
@@ -123,6 +130,7 @@ public static class JsonElementUtils
                     if (!DeepEquals(enumA.Current, enumB.Current, epsilon, caseSensitivePropertyNames))
                         return false;
                 }
+
                 return true;
             default:
                 return false;

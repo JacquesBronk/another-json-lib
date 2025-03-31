@@ -50,13 +50,13 @@ namespace AnotherJsonLib.Utility.Operations;
 public static class JsonPathQuery
 {
     private static readonly ILogger Logger = JsonLoggerFactory.Instance.GetLogger(nameof(JsonPathQuery));
-    
+
     // Thread-safe cache for parsed JSONPath queries
     private static readonly ConcurrentDictionary<string, string[]> QueryCache = new();
-    
+
     // Maximum cache size (can be adjusted with ConfigureCache)
     private static int _maxCacheSize = 1000;
-    
+
     // Default cache expiration timespan
     private static TimeSpan _defaultCacheExpiration = TimeSpan.FromMinutes(30);
 
@@ -84,20 +84,20 @@ public static class JsonPathQuery
             {
                 if (maxCacheSize <= 0)
                     throw new ArgumentOutOfRangeException(nameof(maxCacheSize), "Cache size must be greater than zero");
-                
+
                 _maxCacheSize = maxCacheSize;
-            
+
                 if (cacheExpiration.HasValue)
                 {
                     if (cacheExpiration.Value <= TimeSpan.Zero)
                         throw new ArgumentOutOfRangeException(nameof(cacheExpiration), "Cache expiration must be greater than zero");
-                    
+
                     _defaultCacheExpiration = cacheExpiration.Value;
                 }
-            
-                Logger.LogInformation("JSON Path query cache configured with size: {CacheSize}, expiration: {CacheExpiration}", 
+
+                Logger.LogInformation("JSON Path query cache configured with size: {CacheSize}, expiration: {CacheExpiration}",
                     _maxCacheSize, _defaultCacheExpiration);
-                
+
                 // Trim cache if needed
                 if (QueryCache.Count > _maxCacheSize)
                 {
@@ -114,14 +114,14 @@ public static class JsonPathQuery
     public static void ClearCache()
     {
         using var performance = new PerformanceTracker(Logger, nameof(ClearCache));
-        
+
         ExceptionHelpers.SafeExecute(() =>
-        {
-            QueryCache.Clear();
-            Logger.LogDebug("JSON Path query cache cleared");
-        },
-        (ex, msg) => new JsonPathException($"Failed to clear JSONPath query cache: {msg}", ex),
-        "Error clearing JSONPath query cache");
+            {
+                QueryCache.Clear();
+                Logger.LogDebug("JSON Path query cache cleared");
+            },
+            (ex, msg) => new JsonPathException($"Failed to clear JSONPath query cache: {msg}", ex),
+            "Error clearing JSONPath query cache");
     }
 
     /// <summary>
@@ -131,22 +131,22 @@ public static class JsonPathQuery
     public static void RemoveCacheEntry(string jsonPath)
     {
         using var performance = new PerformanceTracker(Logger, nameof(RemoveCacheEntry));
-        
+
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(jsonPath, nameof(jsonPath));
-        
+
         ExceptionHelpers.SafeExecute(() =>
-        {
-            if (QueryCache.TryRemove(jsonPath, out _))
             {
-                Logger.LogTrace("Removed cache entry for JSON path: {JsonPath}", jsonPath);
-            }
-            else
-            {
-                Logger.LogTrace("Cache entry not found for JSON path: {JsonPath}", jsonPath);
-            }
-        },
-        (ex, msg) => new JsonPathException($"Failed to remove JSONPath cache entry: {msg}", ex),
-        "Error removing JSONPath cache entry");
+                if (QueryCache.TryRemove(jsonPath, out _))
+                {
+                    Logger.LogTrace("Removed cache entry for JSON path: {JsonPath}", jsonPath);
+                }
+                else
+                {
+                    Logger.LogTrace("Cache entry not found for JSON path: {JsonPath}", jsonPath);
+                }
+            },
+            (ex, msg) => new JsonPathException($"Failed to remove JSONPath cache entry: {msg}", ex),
+            "Error removing JSONPath cache entry");
     }
 
     /// <summary>
@@ -158,15 +158,15 @@ public static class JsonPathQuery
         // A more sophisticated implementation would use a time-based LRU cache
         int entriesToRemove = QueryCache.Count - _maxCacheSize;
         if (entriesToRemove <= 0) return;
-        
+
         int countToRemove = Math.Min(entriesToRemove + (_maxCacheSize / 2), QueryCache.Count);
-        
+
         var keysToRemove = QueryCache.Keys.Take(countToRemove).ToList();
         foreach (var key in keysToRemove)
         {
             QueryCache.TryRemove(key, out _);
         }
-        
+
         Logger.LogDebug("Trimmed JSON Path query cache by removing {RemovedCount} entries", keysToRemove.Count);
     }
 
@@ -178,17 +178,17 @@ public static class JsonPathQuery
     private static string[] ParseJsonPath(string jsonPath)
     {
         string trimmed = jsonPath.Trim();
-        
+
         // Normalize the path by removing leading $ and dot if present
         if (trimmed.StartsWith("$"))
             trimmed = trimmed.Substring(1);
         if (trimmed.StartsWith("."))
             trimmed = trimmed.Substring(1);
-            
+
         // Handle special case for empty path (root)
         if (string.IsNullOrEmpty(trimmed))
             return Array.Empty<string>();
-            
+
         // Split by dots and filter out empty segments
         return trimmed.Split('.')
             .Where(part => !string.IsNullOrEmpty(part))
@@ -246,7 +246,7 @@ public static class JsonPathQuery
     public static IEnumerable<JsonElement?> QueryJsonElement(this JsonDocument jsonDocument, string jsonPath)
     {
         using var performance = new PerformanceTracker(Logger, nameof(QueryJsonElement));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNull(jsonDocument, nameof(jsonDocument));
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(jsonPath, nameof(jsonPath));
@@ -256,7 +256,7 @@ public static class JsonPathQuery
                 Logger.LogTrace("Querying document with JSON path: {JsonPath}", jsonPath);
 
                 // Get or parse path tokens
-                string[] tokens = QueryCache.GetOrAdd(jsonPath, path => 
+                string[] tokens = QueryCache.GetOrAdd(jsonPath, path =>
                 {
                     Logger.LogTrace("Cache miss - parsing JSON path: {JsonPath}", path);
                     return ParseJsonPath(path);
@@ -390,21 +390,21 @@ public static class JsonPathQuery
     {
         // Initialize empty result
         results = Enumerable.Empty<JsonElement?>();
-        
+
         // Match pattern "property[indices]" or direct "[indices]"
         var match = Regex.Match(token, @"^(?:(.*)\[|\[)(.+)\]$");
         if (!match.Success) return false;
-        
+
         string? propertyName = match.Groups[1].Success ? match.Groups[1].Value : null;
         string indicesPart = match.Groups[2].Value;
-        
+
         // Get the element to index (either a property or the element itself)
         JsonElement elementToIndex;
-        
+
         if (propertyName != null)
         {
             // Format is property[indices]
-            if (element.ValueKind != JsonValueKind.Object || 
+            if (element.ValueKind != JsonValueKind.Object ||
                 !element.TryGetProperty(propertyName, out elementToIndex))
             {
                 return false;
@@ -415,13 +415,13 @@ public static class JsonPathQuery
             // Format is direct [indices]
             elementToIndex = element;
         }
-        
+
         // Element must be an array for indexing
         if (elementToIndex.ValueKind != JsonValueKind.Array)
         {
             return false;
         }
-        
+
         // Handle different index formats
         if (indicesPart == "*")
         {
@@ -434,18 +434,19 @@ public static class JsonPathQuery
                     matches.Add(matched);
                 }
             }
+
             results = matches;
             return true;
         }
-        
+
         // Handle comma-separated indices
         var indices = indicesPart.Split(',').Select(i => i.Trim());
         var arrayResults = new List<JsonElement?>();
-        
+
         foreach (var indexStr in indices)
         {
-            if (int.TryParse(indexStr, out int arrayIndex) && 
-                arrayIndex >= 0 && 
+            if (int.TryParse(indexStr, out int arrayIndex) &&
+                arrayIndex >= 0 &&
                 arrayIndex < elementToIndex.GetArrayLength())
             {
                 var arrayItem = elementToIndex[arrayIndex];
@@ -455,7 +456,7 @@ public static class JsonPathQuery
                 }
             }
         }
-        
+
         results = arrayResults;
         return true;
     }
@@ -469,12 +470,12 @@ public static class JsonPathQuery
     {
         var stack = new Stack<JsonElement>();
         stack.Push(root);
-        
+
         while (stack.Count > 0)
         {
             var current = stack.Pop();
             yield return current;
-            
+
             if (current.ValueKind == JsonValueKind.Object)
             {
                 foreach (var property in current.EnumerateObject())
@@ -493,7 +494,7 @@ public static class JsonPathQuery
             }
         }
     }
-    
+
     /// <summary>
     /// Attempts to query a JsonDocument using a JSONPath expression,
     /// returning a success indicator instead of throwing exceptions.
@@ -503,8 +504,8 @@ public static class JsonPathQuery
     /// <param name="results">When successful, contains the matching elements; otherwise, an empty collection.</param>
     /// <returns>True if the query was executed successfully; otherwise, false.</returns>
     public static bool TryQueryJsonElement(
-        this JsonDocument? jsonDocument, 
-        string jsonPath, 
+        this JsonDocument? jsonDocument,
+        string jsonPath,
         out IEnumerable<JsonElement?> results)
     {
         if (jsonDocument == null || string.IsNullOrWhiteSpace(jsonPath))
@@ -512,7 +513,7 @@ public static class JsonPathQuery
             results = Enumerable.Empty<JsonElement?>();
             return false;
         }
-        
+
         try
         {
             results = jsonDocument.QueryJsonElement(jsonPath).ToList();
@@ -549,7 +550,7 @@ public static class JsonPathQuery
     public static IEnumerable<JsonElement?> QueryJson(string json, string jsonPath)
     {
         using var performance = new PerformanceTracker(Logger, nameof(QueryJson));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(jsonPath, nameof(jsonPath));
@@ -558,7 +559,7 @@ public static class JsonPathQuery
             {
                 Logger.LogDebug("Querying JSON string with JSON path: {JsonPath}", jsonPath);
 
-                using var document = JsonDocument.Parse(json);
+                var document = JsonDocument.Parse(json);
                 var results = document.QueryJsonElement(jsonPath).ToList();
 
                 Logger.LogDebug("JSON path query returned {Count} results", results.Count);
@@ -572,7 +573,7 @@ public static class JsonPathQuery
             },
             $"Error executing JSONPath query '{jsonPath}' on JSON string") ?? new List<JsonElement?>();
     }
-    
+
     /// <summary>
     /// Attempts to query a JSON string using a JSONPath expression,
     /// returning a success indicator instead of throwing exceptions.
@@ -582,8 +583,8 @@ public static class JsonPathQuery
     /// <param name="results">When successful, contains the matching elements; otherwise, an empty collection.</param>
     /// <returns>True if the query was executed successfully; otherwise, false.</returns>
     public static bool TryQueryJson(
-        string json, 
-        string jsonPath, 
+        string json,
+        string jsonPath,
         out IEnumerable<JsonElement?> results)
     {
         if (string.IsNullOrWhiteSpace(json) || string.IsNullOrWhiteSpace(jsonPath))
@@ -591,10 +592,24 @@ public static class JsonPathQuery
             results = Enumerable.Empty<JsonElement?>();
             return false;
         }
-        
+
         try
         {
+            // First, try to parse the path to validate it
+            if (!IsValidJsonPath(jsonPath))
+            {
+                results = Enumerable.Empty<JsonElement?>();
+                return false;
+            }
+
             results = QueryJson(json, jsonPath).ToList();
+
+            // Consider query unsuccessful if it returned no results
+            if (!results.Any())
+            {
+                return false;
+            }
+
             return true;
         }
         catch (Exception ex)
@@ -603,5 +618,44 @@ public static class JsonPathQuery
             results = Enumerable.Empty<JsonElement?>();
             return false;
         }
+    }
+
+    /// <summary>
+    /// Validates if a string is a syntactically correct JSONPath.
+    /// </summary>
+    /// <param name="jsonPath">The JSONPath string to validate.</param>
+    /// <returns>True if the JSONPath is valid; otherwise, false.</returns>
+    private static bool IsValidJsonPath(string jsonPath)
+    {
+        // Basic validation for JSONPath syntax
+        // Check for a valid JSONPath format using common patterns
+
+        // Trim whitespace
+        jsonPath = jsonPath.Trim();
+
+        // Must start with $ or a property name
+        if (!(jsonPath.StartsWith("$") || jsonPath.StartsWith(".") ||
+              char.IsLetterOrDigit(jsonPath[0]) || jsonPath.StartsWith("[") || jsonPath.StartsWith("*")))
+        {
+            return false;
+        }
+
+        // Check for balanced brackets
+        int openBrackets = 0;
+        foreach (char c in jsonPath)
+        {
+            if (c == '[') openBrackets++;
+            else if (c == ']') openBrackets--;
+
+            // If at any point we have more closing than opening brackets, it's invalid
+            if (openBrackets < 0) return false;
+        }
+
+        // All brackets should be closed
+        if (openBrackets != 0) return false;
+
+        // Additional validation could be added here for more complex path validation
+
+        return true;
     }
 }

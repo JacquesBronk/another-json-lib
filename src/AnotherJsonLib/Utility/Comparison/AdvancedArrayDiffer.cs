@@ -110,7 +110,7 @@ public static class AdvancedArrayDiffer
                             {
                                 Op = "add",
                                 Path = $"{basePath}/{j}",
-                                Value = (JsonElement?)updList[j].CloneValue()
+                                Value = ConvertToJsonElement(updList[j].CloneValue())
                             });
                         }
                     }
@@ -131,7 +131,7 @@ public static class AdvancedArrayDiffer
                             {
                                 Op = "replace",
                                 Path = $"{basePath}/{i}",
-                                Value = (JsonElement?)updList[i].CloneValue()
+                                Value = ConvertToJsonElement(updList[i].CloneValue())
                             });
                         }
                     }
@@ -153,7 +153,7 @@ public static class AdvancedArrayDiffer
                         {
                             Op = "add",
                             Path = $"{basePath}/{i}",
-                            Value = (JsonElement?)updList[i].CloneValue()
+                            Value = ConvertToJsonElement(updList[i].CloneValue())
                         });
                     }
                 }
@@ -161,7 +161,7 @@ public static class AdvancedArrayDiffer
                 Logger.LogInformation("Generated {Count} patch operations", ops.Count);
                 return ops;
             },
-            (ex, msg) => new JsonOperationException(msg, ex),
+            (ex, msg) => new JsonComparisonException(msg, ex),
             $"Failed to generate array patch with mode {mode}"
         );
     }
@@ -314,45 +314,18 @@ public static class AdvancedArrayDiffer
             (ex, msg) => new JsonOperationException($"Error comparing JSON elements: {msg}", ex),
             "Failed to compare JSON elements");
     }
-
-    private static bool CompareJsonObjects(JsonElement a, JsonElement b)
+    
+    private static JsonElement ConvertToJsonElement(object? value)
     {
-        // Check if they have the same number of properties
-        int aCount = a.EnumerateObject().Count();
-        int bCount = b.EnumerateObject().Count();
-        if (aCount != bCount)
-            return false;
-
-        // Check if all properties in 'a' exist in 'b' with equal values
-        foreach (JsonProperty property in a.EnumerateObject())
+        if (value is JsonElement element)
         {
-            // Check if property exists in b
-            if (!b.TryGetProperty(property.Name, out JsonElement bValue))
-                return false;
-
-            // Recursively compare the property values
-            if (!JsonElementsAreEqual(property.Value, bValue))
-                return false;
+            return element;
         }
-
-        return true;
-    }
-
-    private static bool CompareJsonArrays(JsonElement a, JsonElement b)
-    {
-        // Check if they have the same length
-        int aLength = a.GetArrayLength();
-        int bLength = b.GetArrayLength();
-        if (aLength != bLength)
-            return false;
-
-        // Compare each element in sequence
-        for (int i = 0; i < aLength; i++)
-        {
-            if (!JsonElementsAreEqual(a[i], b[i]))
-                return false;
-        }
-
-        return true;
+    
+        // Serialize the value and then parse it to get a JsonElement.
+        // This ensures that even if value is a primitive (e.g., string, number), we get a JsonElement.
+        string serialized = JsonSerializer.Serialize(value);
+        using var doc = JsonDocument.Parse(serialized);
+        return doc.RootElement.Clone(); // Clone to avoid disposal issues.
     }
 }

@@ -18,6 +18,44 @@ public static class JsonSchemaValidator
 {
     /// <summary>
     /// Validates a JSON instance (as a JsonElement) against a JSON Schema (as a JsonElement).
+    /// 
+    /// <example>
+    /// <code>
+    /// // Example JSON schema
+    /// string schemaJson = @"
+    /// {
+    ///   ""type"": ""object"",
+    ///   ""properties"": {
+    ///     ""name"": { ""type"": ""string"" },
+    ///     ""age"": { ""type"": ""integer"" }
+    ///   },
+    ///   ""required"": [""name"", ""age""]
+    /// }";
+    /// 
+    /// // Example JSON instance
+    /// string instanceJson = @"
+    /// {
+    ///   ""name"": ""John Doe"",
+    ///   ""age"": 30
+    /// }";
+    /// 
+    /// using var schemaDoc = JsonDocument.Parse(schemaJson);
+    /// using var instanceDoc = JsonDocument.Parse(instanceJson);
+    /// JsonElement schemaElement = schemaDoc.RootElement;
+    /// JsonElement instanceElement = instanceDoc.RootElement;
+    /// 
+    /// // Validate the instance against the schema
+    /// JsonSchemaValidationResult result = JsonSchemaValidator.Validate(schemaElement, instanceElement);
+    /// 
+    /// // Check if the instance is valid
+    /// bool isValid = result.IsValid;
+    /// // Output any validation errors
+    /// foreach (string error in result.Errors)
+    /// {
+    ///     Console.WriteLine(error);
+    /// }
+    /// </code>
+    /// </example>
     /// </summary>
     /// <param name="schema">The JSON Schema.</param>
     /// <param name="instance">The JSON instance to validate.</param>

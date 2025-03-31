@@ -1,5 +1,7 @@
-﻿using System.Text.Encodings.Web;
+﻿using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Helper;
 using Microsoft.Extensions.Logging;
@@ -68,14 +70,14 @@ public static class JsonSorter
     public static string SortJson(string json, bool indented = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(SortJson));
-        
+
         // Validate input
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
             {
                 Logger.LogDebug("Sorting JSON properties in {Length} character string", json.Length);
-            
+
                 using var document = JsonDocument.Parse(json);
                 var sortedObject = NormalizeValue(document.RootElement);
                 var options = new JsonSerializerOptions
@@ -83,21 +85,22 @@ public static class JsonSorter
                     WriteIndented = indented,
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
-            
+
                 string result = JsonSerializer.Serialize(sortedObject, options);
-                Logger.LogDebug("Successfully sorted JSON from {OriginalLength} to {ResultLength} characters", 
+                Logger.LogDebug("Successfully sorted JSON from {OriginalLength} to {ResultLength} characters",
                     json.Length, result.Length);
-                
+
                 return result;
             },
-            (ex, msg) => {
+            (ex, msg) =>
+            {
                 if (ex is JsonException)
                     return new JsonParsingException("Failed to sort JSON: Invalid JSON format", ex);
                 return new JsonSortingException($"Failed to sort JSON: {msg}", ex);
             },
             "Failed to sort JSON properties") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Sorts JSON object properties using a custom comparer for property names.
     /// This allows for specialized sorting such as case-insensitive comparison or custom ordering rules.
@@ -124,37 +127,62 @@ public static class JsonSorter
     public static string SortJsonWithComparer(string json, IComparer<string> comparer, bool indented = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(SortJsonWithComparer));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNull(comparer, nameof(comparer));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
             {
                 Logger.LogDebug("Sorting JSON properties with custom comparer in {Length} character string", json.Length);
-            
+
                 using var document = JsonDocument.Parse(json);
-                var sortedObject = NormalizeValueWithComparer(document.RootElement, comparer);
-                var options = new JsonSerializerOptions
+
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
                 {
-                    WriteIndented = indented,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-            
-                string result = JsonSerializer.Serialize(sortedObject, options);
-                Logger.LogDebug("Successfully sorted JSON with custom comparer from {OriginalLength} to {ResultLength} characters", 
+                    return json.FromJson<JsonElement>().ToJson(new JsonSerializerOptions
+                    {
+                        WriteIndented = indented,
+                        NumberHandling = JsonNumberHandling.Strict
+                    });
+                }
+
+                using var stream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = indented });
+
+                writer.WriteStartObject();
+
+                // Get all properties and sort them using the provided comparer
+                var sortedProperties = document.RootElement.EnumerateObject()
+                    .OrderBy(p => p.Name, comparer)
+                    .ToList();
+
+                // Write sorted properties
+                foreach (var property in sortedProperties)
+                {
+                    writer.WritePropertyName(property.Name);
+                    WriteJsonElement(property.Value, writer);
+                }
+
+                writer.WriteEndObject();
+                writer.Flush();
+
+                var result = Encoding.UTF8.GetString(stream.ToArray());
+
+                Logger.LogDebug("Successfully sorted JSON with custom comparer from {OriginalLength} to {ResultLength} characters",
                     json.Length, result.Length);
-                
+
                 return result;
             },
-            (ex, msg) => {
+            (ex, msg) =>
+            {
                 if (ex is JsonException)
                     return new JsonParsingException("Failed to sort JSON with custom comparer: Invalid JSON format", ex);
                 return new JsonSortingException($"Failed to sort JSON with custom comparer: {msg}", ex);
             },
             "Failed to sort JSON properties with custom comparer") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Sorts JSON array elements and object properties recursively to create a fully normalized representation.
     /// This is useful for creating truly canonical forms where both property order and array element order are deterministic.
@@ -187,40 +215,43 @@ public static class JsonSorter
     /// <exception cref="ArgumentNullException">Thrown when the json parameter is null.</exception>
     /// <exception cref="JsonParsingException">Thrown when the input is not valid JSON.</exception>
     /// <exception cref="JsonSortingException">Thrown when an error occurs during the sorting process.</exception>
-    public static string SortJsonDeep(string json, string arrayElementSortProperty, bool indented = false)
+    public static string SortJsonDeep(string json, string? arrayElementSortProperty = null, bool indented = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(SortJsonDeep));
-        
+
         // Validate inputs
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(arrayElementSortProperty, nameof(arrayElementSortProperty));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
             {
                 Logger.LogDebug("Deep sorting JSON properties and arrays in {Length} character string", json.Length);
-            
+
                 using var document = JsonDocument.Parse(json);
-                var sortedObject = NormalizeValueDeep(document.RootElement, arrayElementSortProperty);
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = indented,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-            
-                string result = JsonSerializer.Serialize(sortedObject, options);
-                Logger.LogDebug("Successfully deep-sorted JSON from {OriginalLength} to {ResultLength} characters", 
+
+                // Create a new JSON writer
+                using var stream = new MemoryStream();
+                using var writer = new Utf8JsonWriter(stream);
+
+                // Process the root element (recursively)
+                ProcessElement(document.RootElement, writer, arrayElementSortProperty);
+
+                writer.Flush();
+
+                var result = Encoding.UTF8.GetString(stream.ToArray());
+                Logger.LogDebug("Successfully deep-sorted JSON from {OriginalLength} to {ResultLength} characters",
                     json.Length, result.Length);
-                
                 return result;
             },
-            (ex, msg) => {
+            (ex, msg) =>
+            {
                 if (ex is JsonException)
                     return new JsonParsingException("Failed to deep-sort JSON: Invalid JSON format", ex);
                 return new JsonSortingException($"Failed to deep-sort JSON: {msg}", ex);
             },
             "Failed to deep-sort JSON properties and arrays") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Sorts only the top-level properties of a JSON object, leaving nested structures unchanged.
     /// This is useful when you only need to standardize the order of root properties.
@@ -252,51 +283,58 @@ public static class JsonSorter
     public static string SortJsonShallow(string json, bool indented = false)
     {
         using var performance = new PerformanceTracker(Logger, nameof(SortJsonShallow));
-        
+
         // Validate input
         ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
-        
+
         return ExceptionHelpers.SafeExecute(() =>
             {
                 Logger.LogDebug("Shallow sorting top-level JSON properties in {Length} character string", json.Length);
-            
+
                 using var document = JsonDocument.Parse(json);
-            
+
                 if (document.RootElement.ValueKind != JsonValueKind.Object)
                 {
-                    // If root is not an object, just return the original JSON
-                    Logger.LogDebug("JSON root is not an object, returning original");
-                    return json;
+                    // Option 1: Use a compact serialization
+                    var compactOptions = new JsonSerializerOptions
+                    {
+                        WriteIndented = false,
+                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                        NumberHandling = JsonNumberHandling.Strict
+                    };
+
+                    return json.FromJson<JsonElement>().ToJson(compactOptions);
                 }
-            
+
                 // Create a sorted dictionary for top-level properties
                 var sortedDict = new SortedDictionary<string, JsonElement>(StringComparer.Ordinal);
-            
+
                 foreach (var property in document.RootElement.EnumerateObject())
                 {
                     sortedDict[property.Name] = property.Value.Clone();
                 }
-            
+
                 var options = new JsonSerializerOptions
                 {
                     WriteIndented = indented,
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
-            
+
                 string result = JsonSerializer.Serialize(sortedDict, options);
-                Logger.LogDebug("Successfully shallow-sorted JSON from {OriginalLength} to {ResultLength} characters", 
+                Logger.LogDebug("Successfully shallow-sorted JSON from {OriginalLength} to {ResultLength} characters",
                     json.Length, result.Length);
-                
+
                 return result;
             },
-            (ex, msg) => {
+            (ex, msg) =>
+            {
                 if (ex is JsonException)
                     return new JsonParsingException("Failed to shallow-sort JSON: Invalid JSON format", ex);
                 return new JsonSortingException($"Failed to shallow-sort JSON: {msg}", ex);
             },
             "Failed to shallow-sort JSON properties") ?? string.Empty;
     }
-    
+
     /// <summary>
     /// Attempts to sort a JSON string's properties without throwing exceptions.
     /// </summary>
@@ -311,7 +349,7 @@ public static class JsonSorter
             result = string.Empty;
             return false;
         }
-        
+
         try
         {
             result = SortJson(json, indented);
@@ -320,11 +358,11 @@ public static class JsonSorter
         catch (Exception ex)
         {
             Logger.LogDebug(ex, "Error sorting JSON");
-            result = json;  // Return original on error
+            result = json; // Return original on error
             return false;
         }
     }
-    
+
     /// <summary>
     /// Attempts to deeply sort a JSON string's properties and arrays without throwing exceptions.
     /// </summary>
@@ -340,7 +378,7 @@ public static class JsonSorter
             result = string.Empty;
             return false;
         }
-        
+
         try
         {
             result = SortJsonDeep(json, arrayElementSortProperty, indented);
@@ -349,7 +387,7 @@ public static class JsonSorter
         catch (Exception ex)
         {
             Logger.LogDebug(ex, "Error deep-sorting JSON");
-            result = json;  // Return original on error
+            result = json; // Return original on error
             return false;
         }
     }
@@ -373,30 +411,39 @@ public static class JsonSorter
                         {
                             sortedDict[property.Name] = NormalizeValue(property.Value);
                         }
+
                         return sortedDict;
-                        
+
                     case JsonValueKind.Array:
                         var list = new List<object?>();
                         foreach (var item in element.EnumerateArray())
                         {
                             list.Add(NormalizeValue(item));
                         }
+
                         return list;
-                        
+
                     case JsonValueKind.String:
                         return element.GetString();
-                        
+
                     case JsonValueKind.Number:
-                        // Preserve the number by converting using the raw text
-                        return element.GetRawText();
-                        
+                        // Return an actual numeric value instead of a string
+                        if (element.TryGetInt32(out int intValue))
+                            return intValue;
+                        else if (element.TryGetInt64(out long longValue))
+                            return longValue;
+                        else if (element.TryGetDouble(out double doubleValue))
+                            return doubleValue;
+                        else
+                            return element.GetDecimal();
+
                     case JsonValueKind.True:
                     case JsonValueKind.False:
                         return element.GetBoolean();
-                        
+
                     case JsonValueKind.Null:
                         return null;
-                        
+
                     default:
                         return element.ToString();
                 }
@@ -404,127 +451,150 @@ public static class JsonSorter
             null,
             $"Error normalizing JSON element of type {element.ValueKind}");
     }
-    
+
     /// <summary>
-    /// Recursively normalizes a JsonElement to a .NET object with properties sorted using a custom comparer.
+    /// Processes a JsonElement and writes it to a Utf8JsonWriter, sorting properties and arrays as needed.
     /// </summary>
-    /// <param name="element">The JsonElement to normalize.</param>
-    /// <param name="comparer">The string comparer to use for property name comparison.</param>
-    /// <returns>A normalized object with custom-sorted properties.</returns>
-    private static object? NormalizeValueWithComparer(JsonElement element, IComparer<string> comparer)
+    /// <param name="element"></param>
+    /// <param name="writer"></param>
+    /// <param name="arraySortProperty"></param>
+    private static void ProcessElement(JsonElement element, Utf8JsonWriter writer, string? arraySortProperty)
     {
-        return ExceptionHelpers.SafeExecuteWithDefault<object?>(
-            () =>
-            {
-                switch (element.ValueKind)
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+
+                // Sort properties by name
+                var properties = element.EnumerateObject()
+                    .OrderBy(p => p.Name)
+                    .ToList();
+
+                foreach (var property in properties)
                 {
-                    case JsonValueKind.Object:
-                        // Use SortedDictionary with the provided comparer
-                        var sortedDict = new SortedDictionary<string, object?>(comparer);
-                        foreach (var property in element.EnumerateObject())
-                        {
-                            sortedDict[property.Name] = NormalizeValueWithComparer(property.Value, comparer);
-                        }
-                        return sortedDict;
-                        
-                    case JsonValueKind.Array:
-                        var list = new List<object?>();
-                        foreach (var item in element.EnumerateArray())
-                        {
-                            list.Add(NormalizeValueWithComparer(item, comparer));
-                        }
-                        return list;
-                        
-                    case JsonValueKind.String:
-                        return element.GetString();
-                        
-                    case JsonValueKind.Number:
-                        return element.GetRawText();
-                        
-                    case JsonValueKind.True:
-                    case JsonValueKind.False:
-                        return element.GetBoolean();
-                        
-                    case JsonValueKind.Null:
-                        return null;
-                        
-                    default:
-                        return element.ToString();
+                    writer.WritePropertyName(property.Name);
+                    ProcessElement(property.Value, writer, arraySortProperty);
                 }
-            },
-            null,
-            "Error normalizing JSON element with custom comparer");
+
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+
+                var items = element.EnumerateArray().ToList();
+
+                // Sort array elements if they are objects and arraySortProperty is specified
+                if (arraySortProperty != null && items.Count > 0 && items[0].ValueKind == JsonValueKind.Object)
+                {
+                    // Try to sort by the specified property
+                    items = items.OrderBy(item =>
+                    {
+                        if (item.TryGetProperty(arraySortProperty, out var prop))
+                            return prop.GetRawText();
+                        return string.Empty;
+                    }).ToList();
+                }
+
+                foreach (var item in items)
+                {
+                    ProcessElement(item, writer, arraySortProperty);
+                }
+
+                writer.WriteEndArray();
+                break;
+
+            case JsonValueKind.String:
+                writer.WriteStringValue(element.GetString());
+                break;
+
+            case JsonValueKind.Number:
+                // Preserve the numeric type
+                if (element.TryGetInt32(out int intValue))
+                    writer.WriteNumberValue(intValue);
+                else if (element.TryGetInt64(out long longValue))
+                    writer.WriteNumberValue(longValue);
+                else if (element.TryGetDouble(out double doubleValue))
+                    writer.WriteNumberValue(doubleValue);
+                else
+                    writer.WriteRawValue(element.GetRawText());
+                break;
+
+            case JsonValueKind.True:
+                writer.WriteBooleanValue(true);
+                break;
+
+            case JsonValueKind.False:
+                writer.WriteBooleanValue(false);
+                break;
+
+            case JsonValueKind.Null:
+                writer.WriteNullValue();
+                break;
+
+            default:
+                writer.WriteRawValue(element.GetRawText());
+                break;
+        }
     }
-    
+
     /// <summary>
-    /// Recursively normalizes a JsonElement to a .NET object with sorted properties and sorted arrays.
+    /// Writes a JsonElement to a Utf8JsonWriter, preserving its structure and types.
     /// </summary>
-    /// <param name="element">The JsonElement to normalize.</param>
-    /// <param name="arraySortProperty">The property name to use for sorting array elements.</param>
-    /// <returns>A deeply normalized object with sorted properties and arrays.</returns>
-    private static object? NormalizeValueDeep(JsonElement element, string arraySortProperty)
+    /// <param name="element"></param>
+    /// <param name="writer"></param>
+    private static void WriteJsonElement(JsonElement element, Utf8JsonWriter writer)
     {
-        return ExceptionHelpers.SafeExecuteWithDefault<object?>(
-            () =>
-            {
-                switch (element.ValueKind)
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.WriteStartObject();
+                foreach (var property in element.EnumerateObject())
                 {
-                    case JsonValueKind.Object:
-                        var sortedDict = new SortedDictionary<string, object?>(StringComparer.Ordinal);
-                        foreach (var property in element.EnumerateObject())
-                        {
-                            sortedDict[property.Name] = NormalizeValueDeep(property.Value, arraySortProperty);
-                        }
-                        return sortedDict;
-                        
-                    case JsonValueKind.Array:
-                        var list = new List<object?>();
-                        
-                        // First normalize each array element
-                        foreach (var item in element.EnumerateArray())
-                        {
-                            list.Add(NormalizeValueDeep(item, arraySortProperty));
-                        }
-                        
-                        // If array elements are objects, try to sort them by the specified property
-                        if (list.Count > 0 && list[0] is SortedDictionary<string, object?> && !string.IsNullOrEmpty(arraySortProperty))
-                        {
-                            // Sort the list by the specified property
-                            list.Sort((a, b) => 
-                            {
-                                if (a is not SortedDictionary<string, object?> dictA || b is not SortedDictionary<string, object?> dictB)
-                                    return 0;
-                                    
-                                // Try to get the sort property from both dictionaries
-                                if (!dictA.TryGetValue(arraySortProperty, out var valueA) || 
-                                    !dictB.TryGetValue(arraySortProperty, out var valueB))
-                                    return 0;
-                                    
-                                // Compare values
-                                return Comparer<object?>.Default.Compare(valueA, valueB);
-                            });
-                        }
-                        
-                        return list;
-                        
-                    case JsonValueKind.String:
-                        return element.GetString();
-                        
-                    case JsonValueKind.Number:
-                        return element.GetRawText();
-                        
-                    case JsonValueKind.True:
-                    case JsonValueKind.False:
-                        return element.GetBoolean();
-                        
-                    case JsonValueKind.Null:
-                        return null;
-                        
-                    default:
-                        return element.ToString();
+                    writer.WritePropertyName(property.Name);
+                    WriteJsonElement(property.Value, writer);
                 }
-            },
-            null,
-            "Error deep normalizing JSON element");
+
+                writer.WriteEndObject();
+                break;
+
+            case JsonValueKind.Array:
+                writer.WriteStartArray();
+                foreach (var item in element.EnumerateArray())
+                {
+                    WriteJsonElement(item, writer);
+                }
+
+                writer.WriteEndArray();
+                break;
+
+            case JsonValueKind.String:
+                writer.WriteStringValue(element.GetString());
+                break;
+
+            case JsonValueKind.Number:
+                // Preserve numeric types
+                if (element.TryGetInt32(out int intValue))
+                    writer.WriteNumberValue(intValue);
+                else if (element.TryGetInt64(out long longValue))
+                    writer.WriteNumberValue(longValue);
+                else if (element.TryGetDouble(out double doubleValue))
+                    writer.WriteNumberValue(doubleValue);
+                else
+                    writer.WriteRawValue(element.GetRawText());
+                break;
+
+            case JsonValueKind.True:
+                writer.WriteBooleanValue(true);
+                break;
+
+            case JsonValueKind.False:
+                writer.WriteBooleanValue(false);
+                break;
+
+            case JsonValueKind.Null:
+                writer.WriteNullValue();
+                break;
+        }
     }
 }

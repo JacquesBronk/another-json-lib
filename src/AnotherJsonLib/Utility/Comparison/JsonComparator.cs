@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using AnotherJsonLib.Exceptions;
 using AnotherJsonLib.Helper;
@@ -103,6 +104,11 @@ public static class JsonComparator
 
                         if (ignoreWhitespace)
                         {
+                            Debug.Assert(value1 != null, nameof(value1) + " != null");
+                            value1 = NormalizeWhitespace(value1);
+                            Debug.Assert(value2 != null, nameof(value2) + " != null");
+                            value2 = NormalizeWhitespace(value2);
+
                             if (string.Compare(value1?.Trim(), value2?.Trim(),
                                     ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) != 0)
                             {
@@ -228,7 +234,7 @@ public static class JsonComparator
     /// <summary>
     /// Helper method to compare two JsonElements recursively.
     /// </summary>
-    private static bool AreElementsEqual(JsonElement element1, JsonElement element2, bool ignoreCase)
+    public static bool AreElementsEqual(JsonElement element1, JsonElement element2, bool ignoreCase)
     {
         if (element1.ValueKind != element2.ValueKind)
         {
@@ -322,4 +328,14 @@ public static class JsonComparator
         ExceptionHelpers.ThrowIfNull(value, nameof(value));
         return Encoding.UTF8.GetBytes(value);
     }
+    
+    private static string NormalizeWhitespace(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+        
+        // Replace multiple spaces with single space
+        return System.Text.RegularExpressions.Regex.Replace(input, @"\s+", " ").Trim();
+    }
+
 }

@@ -164,7 +164,7 @@ public class DiffTests
         var oldValue = diff.Modified["key"].OldValue;
         oldValue.ShouldBeOfType<JsonElement>();
         ((JsonElement)oldValue).ValueKind.ShouldBe(JsonValueKind.Undefined);
-   
+
         // For the new value, we expect the raw string "value".
         diff.Modified["key"].NewValue.ToString().ShouldBe("value");
     }
@@ -236,7 +236,7 @@ public class DiffTests
         modEntry.NestedDiff.Modified["name"].OldValue.ToString().ShouldBe("B");
         modEntry.NestedDiff.Modified["name"].NewValue.ToString().ShouldBe("C");
     }
-    
+
     [Fact]
     public void Diff_EmptyArrayVsNonEmptyArray_ShouldDetectDifferences()
     {
@@ -250,5 +250,228 @@ public class DiffTests
         // Assert: Expect some differences (implementation-dependent)
         (diff.Added.Count + diff.Removed.Count + diff.Modified.Count)
             .ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void TryComputeDiff_ValidJson_ShouldReturnTrueWithDiffResult()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string newJson = "{\"name\":\"John\",\"age\":31}";
+
+        // Act
+        bool success = JsonDiffer.TryComputeDiff(originalJson, newJson, out var diff);
+
+        // Assert
+        success.ShouldBeTrue();
+        diff.ShouldNotBeNull();
+        diff.Modified.ShouldContainKey("age");
+        var modEntry = diff.Modified["age"];
+        modEntry.OldValue.ToString().ShouldBe("30");
+        modEntry.NewValue.ToString().ShouldBe("31");
+    }
+
+    [Fact]
+    public void TryComputeDiff_InvalidJson_ShouldReturnFalseWithNullResult()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string invalidJson = "{\"name\":\"John\",\"age\":"; // Invalid JSON
+
+        // Act
+        bool success = JsonDiffer.TryComputeDiff(originalJson, invalidJson, out var diff);
+
+        // Assert
+        success.ShouldBeFalse();
+        diff.ShouldBeNull();
+    }
+
+    [Fact]
+    public void ComputeDiffReport_ShouldReturnFormattedReport()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30,\"city\":\"London\"}";
+        string newJson = "{\"name\":\"John\",\"age\":31,\"country\":\"UK\"}";
+
+        // Act
+        string report = JsonDiffer.ComputeDiffReport(originalJson, newJson);
+
+        // Assert
+        report.ShouldContain("Added:");
+        report.ShouldContain("country: \"UK\"");
+        report.ShouldContain("Removed:");
+        report.ShouldContain("city: \"London\"");
+        report.ShouldContain("Modified:");
+        report.ShouldContain("age:");
+        report.ShouldNotContain("name: \"John\""); // Unchanged property not included
+    }
+
+
+    [Fact]
+    public void ComputeDiffReport_WithUnchangedIncluded_ShouldShowUnchangedProperties()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30,\"city\":\"London\"}";
+        string newJson = "{\"name\":\"John\",\"age\":31,\"country\":\"UK\"}";
+
+        // Act
+        string report = JsonDiffer.ComputeDiffReport(originalJson, newJson, includeUnchanged: true);
+
+        // Assert
+        report.ShouldContain("JSON Diff Report:");
+        report.ShouldContain("Added:");
+        report.ShouldContain("country: \"UK\"");
+        report.ShouldContain("Removed:");
+        report.ShouldContain("city: \"London\"");
+        report.ShouldContain("Modified:");
+        report.ShouldContain("age: 30 -> 31");
+    }
+
+
+
+    [Fact]
+    public void HasDifferences_WithDifferences_ShouldReturnTrue()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string newJson = "{\"name\":\"John\",\"age\":31}";
+
+        // Act
+        bool hasDiffs = JsonDiffer.HasDifferences(originalJson, newJson);
+
+        // Assert
+        hasDiffs.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void HasDifferences_WithoutDifferences_ShouldReturnFalse()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string newJson = "{\"name\":\"John\",\"age\":30}";
+
+        // Act
+        bool hasDiffs = JsonDiffer.HasDifferences(originalJson, newJson);
+
+        // Assert
+        hasDiffs.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void TryHasDifferences_ValidJson_ShouldReturnTrueWithResult()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string newJson = "{\"name\":\"John\",\"age\":31}";
+
+        // Act
+        bool success = JsonDiffer.TryHasDifferences(originalJson, newJson, out var hasDifferences);
+
+        // Assert
+        success.ShouldBeTrue();
+        hasDifferences.ShouldNotBeNull();
+        hasDifferences.Value.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void TryHasDifferences_InvalidJson_ShouldReturnFalseWithNullResult()
+    {
+        // Arrange
+        string originalJson = "{\"name\":\"John\",\"age\":30}";
+        string invalidJson = "{\"name\":\"John\",\"age\":"; // Invalid JSON
+
+        // Act
+        bool success = JsonDiffer.TryHasDifferences(originalJson, invalidJson, out var hasDifferences);
+
+        // Assert
+        success.ShouldBeFalse();
+        hasDifferences.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Diff_ArrayComparison_ShouldDetectDifferences()
+    {
+        // Arrange
+        string originalJson = "{\"numbers\":[1,2,3]}";
+        string newJson = "{\"numbers\":[1,2,3,4]}";
+
+        // Act
+        var diff = JsonDiffer.ComputeDiff(originalJson, newJson);
+
+        // Assert
+        diff.Modified.ShouldContainKey("numbers");
+    
+        // Instead of checking the string representation, check that it's a collection
+        // and verify the contents
+        diff.Modified["numbers"].OldValue.ShouldBeAssignableTo<System.Collections.Generic.IEnumerable<object>>();
+        var oldValues = ((System.Collections.Generic.IEnumerable<object>)diff.Modified["numbers"].OldValue).ToList();
+        oldValues.Count.ShouldBe(3);
+        oldValues[0].ShouldBe(1);
+        oldValues[1].ShouldBe(2);
+        oldValues[2].ShouldBe(3);
+    
+        diff.Modified["numbers"].NewValue.ShouldBeAssignableTo<System.Collections.Generic.IEnumerable<object>>();
+        var newValues = ((System.Collections.Generic.IEnumerable<object>)diff.Modified["numbers"].NewValue).ToList();
+        newValues.Count.ShouldBe(4);
+        newValues[0].ShouldBe(1);
+        newValues[1].ShouldBe(2);
+        newValues[2].ShouldBe(3);
+        newValues[3].ShouldBe(4);
+    }
+
+
+    [Fact]
+    public void Diff_DifferentValueTypes_ShouldDetectTypeChanges()
+    {
+        // Arrange
+        string originalJson = "{\"value\":42}";
+        string newJson = "{\"value\":\"42\"}";
+
+        // Act
+        var diff = JsonDiffer.ComputeDiff(originalJson, newJson);
+
+        // Assert
+        diff.Modified.ShouldContainKey("value");
+        diff.Modified["value"].OldValue.ShouldBe(42);
+        diff.Modified["value"].NewValue.ShouldBe("42");
+    }
+
+    [Fact]
+    public void Diff_ComplexNestedObjects_ShouldHandleDeepNesting()
+    {
+        // Arrange
+        string originalJson = @"{
+        ""level1"": {
+            ""level2"": {
+                ""level3"": {
+                    ""data"": ""original""
+                }
+            }
+        }
+    }";
+
+        string newJson = @"{
+        ""level1"": {
+            ""level2"": {
+                ""level3"": {
+                    ""data"": ""changed""
+                }
+            }
+        }
+    }";
+
+        // Act
+        var diff = JsonDiffer.ComputeDiff(originalJson, newJson);
+
+        // Assert
+        diff.Modified.ShouldContainKey("level1");
+        var level1Diff = diff.Modified["level1"].NestedDiff;
+        level1Diff.Modified.ShouldContainKey("level2");
+        var level2Diff = level1Diff.Modified["level2"].NestedDiff;
+        level2Diff.Modified.ShouldContainKey("level3");
+        var level3Diff = level2Diff.Modified["level3"].NestedDiff;
+        level3Diff.Modified.ShouldContainKey("data");
+        level3Diff.Modified["data"].OldValue.ToString().ShouldBe("original");
+        level3Diff.Modified["data"].NewValue.ToString().ShouldBe("changed");
     }
 }

@@ -519,14 +519,52 @@ public static class JsonFormatter
     /// <exception cref="ArgumentNullException">Thrown when the input string is null or empty.</exception>
     public static bool IsMinified(this string json)
     {
-        ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
-        
-        // Check for common indicators of non-minified JSON
-        return !json.Contains(" ") && 
-               !json.Contains("\t") && 
-               !json.Contains("\r") && 
-               !json.Contains("\n");
+        if (string.IsNullOrWhiteSpace(json))
+            throw new JsonArgumentException("JSON string cannot be null or whitespace");
+
+        return !HasStructuralWhitespace(json);
     }
+
+    /// <summary>
+    /// Checks if the JSON has whitespace between structural elements (outside of string values).
+    /// </summary>
+    private static bool HasStructuralWhitespace(string json)
+    {
+        bool insideString = false;
+        bool escaped = false;
+    
+        for (int i = 0; i < json.Length; i++)
+        {
+            char c = json[i];
+        
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+        
+            if (c == '\\' && insideString)
+            {
+                escaped = true;
+                continue;
+            }
+        
+            if (c == '"')
+            {
+                insideString = !insideString;
+                continue;
+            }
+        
+            // Check for whitespace outside of string literals
+            if (!insideString && char.IsWhiteSpace(c))
+            {
+                return true;
+            }
+        }
+    
+        return false;
+    }
+
     
     /// <summary>
     /// Checks if a JSON string is already prettified (has consistent indentation).

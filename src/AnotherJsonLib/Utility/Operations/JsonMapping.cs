@@ -239,6 +239,10 @@ public static class JsonMapping
     /// <summary>
     /// Internal method to filter properties in a JsonElement.
     /// </summary>
+    /// <param name="element">The JsonElement to filter.</param>
+    /// <param name="propertiesToInclude">A set of property names to keep.</param>
+    /// <returns>A filtered object.</returns>
+    /// <exception cref="JsonSortingException">Thrown when the filtering operation fails.</exception>
     private static object? FilterPropertiesInternal(JsonElement element, HashSet<string> propertiesToInclude)
     {
         try
@@ -249,10 +253,30 @@ public static class JsonMapping
                     var dict = new Dictionary<string, object?>();
                     foreach (var property in element.EnumerateObject())
                     {
-                        if (propertiesToInclude.Contains(property.Name))
+                        bool includeProperty = propertiesToInclude.Contains(property.Name);
+
+                        if (includeProperty)
                         {
-                            dict[property.Name] =
-                                MapPropertiesInternal(property.Value, new Dictionary<string, string>());
+                            // Keep this property, but still recursively filter its value if it's an object or array
+                            dict[property.Name] = FilterPropertiesInternal(property.Value, propertiesToInclude);
+                        }
+                        else if (property.Value.ValueKind == JsonValueKind.Object || property.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            // Even if we don't include this property directly,
+                            // we need to check if any of its nested properties should be included
+                            var nestedResult = FilterPropertiesInternal(property.Value, propertiesToInclude);
+
+                            // Only include this property if there are nested properties to include
+                            if (nestedResult is Dictionary<string, object?> nestedDict && nestedDict.Count > 0)
+                            {
+                                dict[property.Name] = nestedResult;
+                            }
+                            else if (nestedResult is List<object?> nestedList && nestedList.Count > 0 &&
+                                     !nestedList.All(item => item is Dictionary<string, object?> dictItem &&
+                                                             (dictItem == null || dictItem.Count == 0)))
+                            {
+                                dict[property.Name] = nestedResult;
+                            }
                         }
                     }
 
@@ -262,20 +286,27 @@ public static class JsonMapping
                     var list = new List<object?>();
                     foreach (var item in element.EnumerateArray())
                     {
-                        list.Add(FilterPropertiesInternal(item, propertiesToInclude));
+                        // Recursively filter each item in the array
+                        var filteredItem = FilterPropertiesInternal(item, propertiesToInclude);
+
+                        // Only add non-empty objects to the result
+                        if (!(filteredItem is Dictionary<string, object?> dictionary && dictionary.Count == 0))
+                        {
+                            list.Add(filteredItem);
+                        }
                     }
 
                     return list;
 
-                // For all other value types, use the same handling as MapPropertiesInternal
+                // For all other value types, just return the value as is
                 default:
-                    return MapPropertiesInternal(element, new Dictionary<string, string>());
+                    return JsonElementUtils.ConvertToObject(element);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error filtering property in JsonElement of type {ValueKind}", element.ValueKind);
-            throw;
+            throw new JsonSortingException("Failed to filter properties: " + ex.Message, ex);
         }
     }
 }

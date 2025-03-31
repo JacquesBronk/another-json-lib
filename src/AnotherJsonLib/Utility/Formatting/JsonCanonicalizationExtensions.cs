@@ -133,7 +133,8 @@ public static class JsonCanonicalizationCacheExtensions
                 string? result = _canonicalCache.GetOrCreate(json, entry => 
                 {
                     entry.SlidingExpiration = TimeSpan.FromMinutes(10);
-                    
+                    entry.Size = json.Length;
+
                     Logger.LogTrace("Cache miss - canonicalizing JSON: {JsonPrefix}", 
                         json.Length > 50 ? json.Substring(0, 50) + "..." : json);
                     

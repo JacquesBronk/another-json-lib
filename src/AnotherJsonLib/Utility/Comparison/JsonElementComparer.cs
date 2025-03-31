@@ -311,7 +311,7 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
     /// <param name="obj">The JsonElement to compute a hash code for.</param>
     /// <param name="hash">The HashCode object to add the hash to.</param>
     /// <param name="depth">The current recursion depth.</param>
-    public void ComputeHashCode(JsonElement obj, ref HashCode hash, int depth)
+    private void ComputeHashCode(JsonElement obj, ref HashCode hash, int depth)
     {
         try
         {
@@ -347,12 +347,11 @@ public class JsonElementComparer : IEqualityComparer<JsonElement>
                     }
                     else
                     {
-                        double rounded = Math.Round(val / Epsilon) * Epsilon;
+                        double biasedVal = val + (Epsilon * 0.0001);
+                        double rounded = Math.Round(biasedVal / Epsilon) * Epsilon;
                         hash.Add(rounded);
                     }
-
                     break;
-
                 case JsonValueKind.String:
                     hash.Add(obj.GetString());
                     break;

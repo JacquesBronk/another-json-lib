@@ -56,8 +56,8 @@ public class JsonPatchGenerator
             Logger.LogDebug("Generating patch between {OriginalLength} char original and {UpdatedLength} char updated JSON", 
                 originalJson.Length, updatedJson.Length);
             
-            using var originalDoc = JsonDocument.Parse(originalJson);
-            using var updatedDoc = JsonDocument.Parse(updatedJson);
+            var originalDoc = JsonDocument.Parse(originalJson);
+            var updatedDoc = JsonDocument.Parse(updatedJson);
             
             var patchOperations = new List<JsonPatchOperation>();
             GeneratePatchOperations("", originalDoc.RootElement, updatedDoc.RootElement, patchOperations);

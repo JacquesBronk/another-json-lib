@@ -25,8 +25,8 @@ public static class ExceptionHelpers
     {
         if (!condition)
         {
-            LogException(new ArgumentException(message, paramName), message, callerMemberName, callerFilePath, callerLineNumber);
-            throw new ArgumentException(message, paramName);
+            LogException(new JsonArgumentException(message, paramName), message, callerMemberName, callerFilePath, callerLineNumber);
+            throw new JsonArgumentException(message, paramName);
         }
     }
 
@@ -69,8 +69,8 @@ public static class ExceptionHelpers
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            LogException(new ArgumentException($"Parameter '{paramName}' cannot be null or whitespace."), $"Parameter '{paramName}' cannot be null or whitespace.", callerMemberName, callerFilePath, callerLineNumber);
-            throw new ArgumentException($"Parameter '{paramName}' cannot be null or whitespace.", paramName);
+            LogException(new JsonArgumentException($"Parameter '{paramName}' cannot be null or whitespace."), $"Parameter '{paramName}' cannot be null or whitespace.", callerMemberName, callerFilePath, callerLineNumber);
+            throw new JsonArgumentException($"Parameter '{paramName}' cannot be null or whitespace.", paramName);
         }
     }
 
