@@ -68,7 +68,7 @@ jobs:
           echo "Found artifact: ${artifact_path}"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: AnotherJsonLibrary.${{ env.newVersion }}.nupkg
           path: ${{ steps.get_artifact_path.outputs.artifact_path }}
