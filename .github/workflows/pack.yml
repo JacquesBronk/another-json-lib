@@ -21,19 +21,19 @@ jobs:
         run: echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
         
       - name: Download artifact
-        uses: aochmann/actions-download-artifact@1.0.4
+        uses: actions/download-artifact@v4
         with:
           workflow: build-test.yml
-          workflow_conclusion: success
+          workflow-conclusion: success
           # GitHub token
-          github_token: ${{ secrets.RELEASE_TOKEN }}
+          github-token: ${{ secrets.RELEASE_TOKEN }}
           # Repository name with owner
           latest: true
-          name_is_regexp: false
+          name-is-regexp: false
           name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
-          check_artifacts: true
-          search_artifacts: true
-          if_no_artifact_found: fail
+          check-artifacts: true
+          search-artifacts: true
+          if-no-artifact_found: fail
           path: ./.artifacts/
 
       - name: Publish NuGet package
