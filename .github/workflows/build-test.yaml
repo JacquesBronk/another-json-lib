@@ -52,16 +52,21 @@ jobs:
           
       - name: Pack
         run: dotnet pack AnotherJsonLib/AnotherJsonLib.csproj --configuration release --output ./../.artifacts/
-        working-directory: src  # Set the working directory to 'src'
+        working-directory: src
+
+      - name: Move artifact to workspace folder
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/artifacts
+          mv "$(pwd)/../.artifacts/"* "$GITHUB_WORKSPACE/artifacts/"
+        working-directory: src
 
       - name: Get artifact path
         id: get_artifact_path
         run: |
-          artifact_path=$(find "$(pwd)/../.artifacts" -maxdepth 1 -type f -name '*.nupkg')
+          artifact_path=$(find "$GITHUB_WORKSPACE/artifacts" -maxdepth 1 -type f -name '*.nupkg')
           echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
           echo "Found artifact: ${artifact_path}"
-        working-directory: src 
-       
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4.6.2
         with:
@@ -76,4 +81,5 @@ jobs:
           tag_name: ${{ env.newVersion }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
 
