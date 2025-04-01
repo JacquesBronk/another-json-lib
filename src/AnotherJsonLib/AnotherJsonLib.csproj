@@ -11,8 +11,10 @@
         <Copyright>Copyright 2023 Agile Bridge</Copyright>
         <PackageTags>Json</PackageTags>
         <PackageProjectUrl>https://github.com/JacquesBronk/another-json-lib</PackageProjectUrl>
-        <PackageLicenseUrl>https://github.com/JacquesBronk/another-json-lib/blob/main/LICENSE</PackageLicenseUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/JacquesBronk/another-json-lib</RepositoryUrl>
+        <PackageIcon>app-icon.png</PackageIcon>
         <LangVersion>11</LangVersion>
     </PropertyGroup>
 
@@ -24,5 +26,9 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.3" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="../../README.md" Pack="true" PackagePath="\"/>
+        <None Include="Images/app-icon.png" Pack="true" PackagePath="\"/>
+    </ItemGroup>
     
 </Project>
