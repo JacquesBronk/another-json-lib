@@ -12,7 +12,7 @@
         <PackageTags>Json</PackageTags>
         <PackageProjectUrl>https://github.com/JacquesBronk/another-json-lib</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/JacquesBronk/another-json-lib</RepositoryUrl>
         <PackageIcon>app-icon.png</PackageIcon>
         <LangVersion>11</LangVersion>
