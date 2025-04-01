@@ -20,12 +20,8 @@ jobs:
       - name: Create Environment File for Output
         run: echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
-      - name: Download-CIArtifact (by PSModule)
-        uses: PSModule/Download-CIArtifact@v0.0.1
-        with:
-          WorkflowID: build-test.yml
-          ArtifactName: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
 
       - name: Publish NuGet package
         run: dotnet nuget push  .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
