@@ -53,18 +53,25 @@ jobs:
       - name: Pack
         run: dotnet pack AnotherJsonLib/AnotherJsonLib.csproj --configuration release --output ./../.artifacts/
         working-directory: src  # Set the working directory to 'src'
+
+      - name: Get artifact path
+        id: get_artifact_path
+        run: |
+          artifact_path=$(find "$(pwd)/../.artifacts" -maxdepth 1 -type f -name '*.nupkg')
+          echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
+          echo "Found artifact: ${artifact_path}"
        
       - name: Upload Artifact
         uses: actions/upload-artifact@v4.6.2
         with:
           name: AnotherJsonLibrary.${{ env.newVersion }}.nupkg
-          path: .artifacts/*.nupkg
+          path: ${{ steps.get_artifact_path.outputs.artifact_path }}
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: .artifacts/*.nupkg
+          files: ${{ steps.get_artifact_path.outputs.artifact_path }}
           tag_name: ${{ env.newVersion }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
