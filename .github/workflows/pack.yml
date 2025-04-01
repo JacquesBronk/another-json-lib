@@ -26,13 +26,12 @@ jobs:
           workflow: build-test.yml
           workflow_conclusion: success
           name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
-          path: ./.artifacts/
   
          
       - name: Get artifact path
         id: get_artifact_path
         run: |
-          artifact_path=$(find "$(pwd)/.artifacts" -maxdepth 1 -type f -name '*.nupkg')
+          artifact_path=$(find "$GITHUB_WORKSPACE/artifacts" -maxdepth 1 -type f -name '*.nupkg')
           echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
           echo "Found artifact: ${artifact_path}"
 
