@@ -392,7 +392,7 @@ public static class JsonDiffer
                         // If there's a nested diff with changes, include it
                         if (HasNestedChanges(modified.Value.NestedDiff))
                         {
-                            AppendNestedDiff(report, modified.Key, modified.Value.NestedDiff, "    ");
+                            AppendNestedDiff(report, modified.Key, modified.Value.NestedDiff ?? new JsonDiffResult(), "    ");
                         }
                     }
 
@@ -438,7 +438,7 @@ public static class JsonDiffer
             // Recursive handling of nested diffs
             if (HasNestedChanges(modified.Value.NestedDiff))
             {
-                AppendNestedDiff(report, $"{parentPath}.{modified.Key}", modified.Value.NestedDiff, indent + "  ");
+                AppendNestedDiff(report, $"{parentPath}.{modified.Key}", modified.Value.NestedDiff ?? new JsonDiffResult(), indent + "  ");
             }
         }
     }

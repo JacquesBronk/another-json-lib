@@ -17,7 +17,7 @@ public class DiffEntry
     /// <value>
     /// The original value of the property, represented as an <c>object</c>.
     /// </value>
-    public object OldValue { get; set; }
+    public required object OldValue { get; set; }
 
     /// <summary>
     /// Gets or sets the new value of the JSON property after it has been modified.
@@ -31,7 +31,7 @@ public class DiffEntry
     /// <value>
     /// The updated value of the property, represented as an <c>object</c>.
     /// </value>
-    public object NewValue { get; set; }
+    public required object NewValue { get; set; }
 
     /// <summary>
     /// Gets or sets the nested differences within a JSON object or structure.
@@ -48,5 +48,5 @@ public class DiffEntry
     /// An instance of <c>JsonDiffResult</c> containing the structured details of
     /// nested changes.
     /// </value>
-    public JsonDiffResult NestedDiff { get; set; }
+    public JsonDiffResult? NestedDiff { get; set; }
 }

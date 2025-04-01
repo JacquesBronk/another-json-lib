@@ -10,15 +10,15 @@ public class JsonPatchOperation
     /// <summary>
     /// The operation type ("add", "remove", "replace", "move").
     /// </summary>
-    public string Op { get; set; }
+    public required string Op { get; set; }
     /// <summary>
     /// The JSON Pointer path where the operation applies.
     /// </summary>
-    public string Path { get; set; }
+    public required string Path { get; set; }
     /// <summary>
     /// For "move" operations, the source location.
     /// </summary>
-    public string From { get; set; }
+    public string? From { get; set; }
     /// <summary>
     /// The value to add or replace. Not used for "remove" or "move".
     /// </summary>
