@@ -82,4 +82,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
+      - name: Publish NuGet package
+        run: dotnet nuget push  ${{ steps.get_artifact_path.outputs.artifact_path }} --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
 
