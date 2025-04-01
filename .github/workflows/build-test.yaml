@@ -40,7 +40,7 @@ jobs:
         working-directory: src  # Set the working directory to 'src'
         
       - name: unit tests for Another Json Lib
-        uses: zyborg/dotnet-tests-report@v1
+        uses: zyborg/dotnet-tests-report@v1.4.4
         with:
           project_path: tests/AnotherJsonLib.Tests
           report_name: another_json_lib_tests
@@ -60,6 +60,7 @@ jobs:
           artifact_path=$(find "$(pwd)/../.artifacts" -maxdepth 1 -type f -name '*.nupkg')
           echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
           echo "Found artifact: ${artifact_path}"
+        working-directory: src 
        
       - name: Upload Artifact
         uses: actions/upload-artifact@v4.6.2
