@@ -35,6 +35,13 @@ jobs:
           search_artifacts: true
           if_no_artifact_found: fail
           path: ./.artifacts/
+          
+      - name: Get artifact path
+        id: get_artifact_path
+        run: |
+          artifact_path=$(find "$(pwd)/.artifacts" -maxdepth 1 -type f -name '*.nupkg')
+          echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
+          echo "Found artifact: ${artifact_path}"
 
       - name: Publish NuGet package
-        run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "${{ steps.get_artifact_path.outputs.artifact_path }}" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
