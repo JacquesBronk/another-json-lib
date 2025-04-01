@@ -25,8 +25,6 @@ jobs:
         with:
           workflow: build-test.yml
           workflow_conclusion: success
-          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
-  
          
       - name: Get artifact path
         id: get_artifact_path
