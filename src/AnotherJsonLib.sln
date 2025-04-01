@@ -21,6 +21,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\docs\JsonTransformation.md = ..\docs\JsonTransformation.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Operations", "Operations", "{04D9D84C-75EC-482A-A5E0-374A1006F35C}"
+	ProjectSection(SolutionItems) = preProject
+		..\docs\operations\JsonMapping.md = ..\docs\operations\JsonMapping.md
+		..\docs\operations\JsonMerger.md = ..\docs\operations\JsonMerger.md
+		..\docs\operations\JsonPatchGenerator.md = ..\docs\operations\JsonPatchGenerator.md
+		..\docs\operations\JsonPathQuery.md = ..\docs\operations\JsonPathQuery.md
+		..\docs\operations\JsonPointer.md = ..\docs\operations\JsonPointer.md
+		..\docs\operations\JsonSorter.md = ..\docs\operations\JsonSorter.md
+		..\docs\operations\JsonStreamer.md = ..\docs\operations\JsonStreamer.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +46,8 @@ Global
 		{0C3073C8-1699-436C-AE7D-9F6B468CEBB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C3073C8-1699-436C-AE7D-9F6B468CEBB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C3073C8-1699-436C-AE7D-9F6B468CEBB2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{04D9D84C-75EC-482A-A5E0-374A1006F35C} = {EDE2F5C3-32DF-43A3-B965-8187F5FC700C}
 	EndGlobalSection
 EndGlobal

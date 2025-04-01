@@ -3,15 +3,15 @@
 ## Overview
 **Another Json Library** is a powerful and comprehensive toolkit for JSON manipulation in C#/.NET applications. It goes beyond basic serialization and deserialization to provide advanced JSON operations like comparison, patching, path querying, and streaming large JSON files efficiently. Designed with performance and developer experience in mind, this library serves as a complete solution for working with JSON data in modern .NET applications.
 ## Documentation
-- [JSON Operations](docs/JsonOperations.md) - Core JSON manipulation functionality including property mapping and transformation
-- [JSON Comparison](docs/JsonComparison.md) - Compare and identify differences between JSON documents
-- [JSON Element Utilities](docs/JsonElementUtilities.md) - Implementation of RFC 6901 JSON Pointer specification
-- [JSON Formatting](docs/JsonFormatting.md) - Format and query JSON documents using JSONPath expressions
-- [JSON Schema Validation](docs/JsonSchemaValidation.md) - Validate JSON documents against JSON Schema and apply patches following RFC 6902
-- [JSON Security](docs/JsonSecurity.md) - Secure JSON processing and handling of sensitive data
-- [JSON Serialization](docs/JsonSerialization.md) - Advanced serialization and deserialization capabilities
-- [JSON Compression](docs/JsonCompression.md) - Optimize JSON document size through compression techniques
-- [JSON Transformation](docs/JsonTransformation.md) - Merge, minify, and canonicalize JSON documents
+- [JSON Operations](docs/JsonOperations.md) - Core JSON manipulation functionality including property mapping and transformation.
+- [JSON Comparison](docs/JsonComparison.md) - Compare and identify differences between JSON documents.
+- [JSON Element Utilities](docs/JsonElementUtilities.md) - Implementation of RFC 6901 JSON Pointer specification.
+- [JSON Formatting](docs/JsonFormatting.md) - Format and query JSON documents using JSONPath expressions.
+- [JSON Schema Validation](docs/JsonSchemaValidation.md) - Validate JSON documents against JSON Schema and apply patches following RFC 6902.
+- [JSON Security](docs/JsonSecurity.md) - Secure JSON processing and handling of sensitive data.
+- [JSON Serialization](docs/JsonSerialization.md) - Advanced serialization and deserialization capabilities.
+- [JSON Compression](docs/JsonCompression.md) - Optimize JSON document size through compression techniques.
+- [JSON Transformation](docs/JsonTransformation.md) - Merge, minify, and canonicalize JSON documents.
 
 ## Features
 - **Serialization & Deserialization:** Efficiently convert C# objects to JSON and back with convenient extension methods and support for complex type hierarchies.
