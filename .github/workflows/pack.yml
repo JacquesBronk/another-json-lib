@@ -19,19 +19,22 @@ jobs:
 
       - name: Create Environment File for Output
         run: echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
-
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v4
+        
+      - name: Download artifact
+        uses: aochmann/actions-download-artifact@1.0.4
         with:
           workflow: build-test.yml
           workflow_conclusion: success
-         
-      - name: Get artifact path
-        id: get_artifact_path
-        run: |
-          artifact_path=$(find "$GITHUB_WORKSPACE/artifacts" -maxdepth 1 -type f -name '*.nupkg')
-          echo "artifact_path=${artifact_path}" >> $GITHUB_OUTPUT
-          echo "Found artifact: ${artifact_path}"
+          # GitHub token
+          github_token: ${{ secrets.RELEASE_TOKEN }}
+          # Repository name with owner
+          latest: true
+          name_is_regexp: false
+          name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
+          check_artifacts: true
+          search_artifacts: true
+          if_no_artifact_found: fail
+          path: ./.artifacts/
 
       - name: Publish NuGet package
-        run: dotnet nuget push "${{ steps.get_artifact_path.outputs.artifact_path }}" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
