@@ -21,7 +21,7 @@ jobs:
         run: echo "release_tag=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Download a Build Artifact
-        uses: actions/download-artifact@v4.2.1
+        uses: actions/download-artifact@v4
         with:
           workflow: build-test.yml
           workflow_conclusion: success
