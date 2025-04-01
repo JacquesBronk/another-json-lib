@@ -25,16 +25,8 @@ jobs:
         with:
           workflow: build-test.yml
           workflow-conclusion: success
-          # GitHub token
-          github-token: ${{ secrets.RELEASE_TOKEN }}
-          # Repository name with owner
-          latest: true
-          name-is-regexp: false
           name: AnotherJsonLibrary.${{ github.event.release.tag_name }}.nupkg
-          check-artifacts: true
-          search-artifacts: true
-          if-no-artifact_found: fail
-          path: ./.artifacts/
+          path:  $GITHUB_WORKSPACE/artifacts/
 
       - name: Publish NuGet package
-        run: dotnet nuget push .artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push  $GITHUB_WORKSPACE/artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
