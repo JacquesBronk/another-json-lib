@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "language": "dotnet",
+  "languageVersion": "8.0",
+  "toolchain": "dotnet",
+  "install": "dotnet restore src/AnotherJsonLib.sln",
+  "build": "dotnet build src/AnotherJsonLib.sln -c Release --no-restore",
+  "test": "dotnet test src/AnotherJsonLib.sln -c Release --no-restore"
+}
