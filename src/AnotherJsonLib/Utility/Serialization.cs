@@ -113,9 +113,9 @@ public static class Serialization
     
     private static T? DeserializeWithExceptionHandling<T>(string json, JsonSerializerOptions options)
     {
+        ExceptionHelpers.ThrowIfNullOrWhiteSpace(json, nameof(json));
         return ExceptionHelpers.SafeExecuteWithDefault(() =>
             {
-                ExceptionHelpers.ThrowIfNull(json, nameof(json));
                 return JsonSerializer.Deserialize<T>(json, options);
             },
             default,
@@ -133,6 +133,11 @@ public static class Serialization
     /// <returns>True if deserialization was successful; otherwise, false.</returns>
     public static bool TryFromJson<T>(this string json, out T? result, JsonSerializerOptions? options = null, bool useDiagnosticTracker = false)
     {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            result = default;
+            return false;
+        }
         result = FromJson<T>(json, options, useDiagnosticTracker);
         return result != null;
     }
